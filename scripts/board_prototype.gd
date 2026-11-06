@@ -148,16 +148,25 @@ func _gui_input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
 		mouse_position = event.position
 		if event.pressed:
-			var hit := _card_at(mouse_position, true)
-			if not hit.is_empty() and str(hit[_place_key()]) == "board":
-				connecting_from_id = int(hit.id)
+			var source := _port_at(mouse_position, true)
+			if not source.is_empty():
+				connecting_from_id = int(source.id)
+				execution_message = "Выход выбран: %s. Потяни линию к зелёному входу другой карты." % str(source.title)
+				accept_event()
+				queue_redraw()
+			else:
+				execution_message = "Связь начинается с янтарного ВЫХОДА справа на карте."
 				accept_event()
 				queue_redraw()
 		else:
 			if connecting_from_id != -1:
-				var target := _card_at(mouse_position, true)
-				if not target.is_empty() and str(target[_place_key()]) == "board":
+				var target := _port_at(mouse_position, false)
+				if not target.is_empty() and int(target.id) != connecting_from_id:
 					_add_directed_link(connecting_from_id, int(target.id))
+				elif not target.is_empty():
+					execution_message = "Нельзя соединить карту саму с собой."
+				else:
+					execution_message = "Не попал во вход. Отпусти кнопку на зелёном ВХОДЕ слева."
 				connecting_from_id = -1
 				accept_event()
 				queue_redraw()
@@ -299,6 +308,22 @@ func _finish_card_drag(release_position: Vector2) -> void:
 	drag_card_id = -1
 
 
+func _port_position(card: Dictionary, is_output: bool) -> Vector2:
+	var center := Vector2(card[_position_key()])
+	return center + Vector2(CARD_SIZE.x * 0.5 if is_output else -CARD_SIZE.x * 0.5, 0.0)
+
+
+func _port_at(point: Vector2, is_output: bool) -> Dictionary:
+	var board_cards := _board_cards()
+	board_cards.reverse()
+	for card in board_cards:
+		if int(card.id) == drag_card_id:
+			continue
+		if point.distance_to(_port_position(card, is_output)) <= 16.0:
+			return card
+	return {}
+
+
 func _card_at(point: Vector2, board_only := false) -> Dictionary:
 	var place_key := _place_key()
 	var position_key := _position_key()
@@ -437,7 +462,7 @@ func _draw() -> void:
 	if connecting_from_id != -1:
 		var source := _card_by_id(connecting_from_id)
 		if not source.is_empty():
-			draw_line(Vector2(source[_position_key()]), mouse_position, ACCENT, 4.0, true)
+			draw_line(_port_position(source, true), mouse_position, ACCENT, 4.0, true)
 			draw_circle(mouse_position, 7.0, ACCENT)
 	if journal_open:
 		_draw_journal()
@@ -490,13 +515,11 @@ func _draw_links() -> void:
 			continue
 		if str(a[_place_key()]) != "board" or str(b[_place_key()]) != "board":
 			continue
-		var from_center := Vector2(a[_position_key()])
-		var to_center := Vector2(b[_position_key()])
-		var direction := (to_center - from_center).normalized()
+		var from_edge := _port_position(a, true)
+		var to_edge := _port_position(b, false)
+		var direction := (to_edge - from_edge).normalized()
 		if direction == Vector2.ZERO:
 			continue
-		var from_edge := _card_edge_point(from_center, direction)
-		var to_edge := _card_edge_point(to_center, -direction)
 		draw_line(from_edge, to_edge, LINK_COLOR, 3.0, true)
 		draw_circle(from_edge, 5.0, ACCENT)
 		draw_circle(to_edge, 5.0, Color("#82b8a0"))
@@ -543,8 +566,8 @@ func _draw_card(card: Dictionary, top_left: Vector2, on_board := false) -> void:
 		# Explicit, color-coded connection ports make direction readable.
 		draw_circle(Vector2(top_left.x, top_left.y + CARD_SIZE.y * 0.5), 6.0, Color("#82b8a0"))
 		draw_circle(Vector2(top_left.x + CARD_SIZE.x, top_left.y + CARD_SIZE.y * 0.5), 6.0, ACCENT)
-		draw_string(font, top_left + Vector2(3, 76), "ВХ", HORIZONTAL_ALIGNMENT_LEFT, 20, 7, Color("#34483f"))
-		draw_string(font, top_left + Vector2(CARD_SIZE.x - 22, 76), "ВЫХ", HORIZONTAL_ALIGNMENT_RIGHT, 20, 7, Color("#594126"))
+		draw_string(font, top_left + Vector2(8, 76), "ВХОД", HORIZONTAL_ALIGNMENT_LEFT, 34, 8, Color("#34483f"))
+		draw_string(font, top_left + Vector2(CARD_SIZE.x - 48, 76), "ВЫХОД", HORIZONTAL_ALIGNMENT_RIGHT, 40, 8, Color("#594126"))
 
 
 func _category_color(category: String) -> Color:
