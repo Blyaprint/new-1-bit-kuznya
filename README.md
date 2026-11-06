@@ -32,3 +32,16 @@ Open this folder in Godot 4.6 and run the project (F6/F5). The main scene is `sc
 - Press **Выполнить** in the top-right corner to validate the current graph.
 - A successful check reports the number of board cards and connections.
 - This is structural validation only: it does not consume cards or create a crafted item yet.
+
+
+## First craft recipe: Katrina's horseshoe
+
+The first working recipe is **Подкова**. Place these five cards on the board and connect them into one continuous network:
+
+- **Железо** — consumed.
+- **Уголь** — consumed.
+- **Заготовка** — transformed into the result and consumed.
+- **Молот** — reusable; remains on the board.
+- **Нагрев** — reusable; remains on the board.
+
+Press **Выполнить**. The recipe checks that all five required cards are present, every board card has a connection, and the graph is one connected component. On success, the three consumed cards and their links are removed, and a **Подкова** result card appears at the former Заготовка position. The recipe does not yet model operation order, material quality, or inventory transfer.
