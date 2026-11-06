@@ -83,11 +83,6 @@ func _set_active_links(value: Array[String]) -> void:
 		research_links = value
 
 
-func _process(_delta: float) -> void:
-	if drag_card_id != -1 or connecting_from_id != -1:
-		queue_redraw()
-
-
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		mouse_position = event.position
