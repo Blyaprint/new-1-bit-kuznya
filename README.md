@@ -23,3 +23,12 @@ This is an intentionally isolated interaction prototype. It does not yet include
 ## Run
 
 Open this folder in Godot 4.6 and run the project (F6/F5). The main scene is `scenes/board_prototype.tscn`.
+
+
+## First scheme execution check
+
+- Place at least two cards on the engineering board.
+- Every card on the board must have at least one connection.
+- Press **Выполнить** in the top-right corner to validate the current graph.
+- A successful check reports the number of board cards and connections.
+- This is structural validation only: it does not consume cards or create a crafted item yet.
