@@ -2,71 +2,47 @@
 
 Prototype project for Godot 4.6.
 
-## Current foundation: production and research
+## Playable core in progress
 
-The project now has one engineering workspace with two modes. Each mode keeps its own card placement and directed graph, so switching modes does not overwrite the other mode's current layout.
+The current prototype combines an engineering board with the first economy loop.
 
-### Shared inventory / hand
+### Workshop and production
+- The production and research modes keep separate board layouts and directed links.
+- Drag cards from the hand onto the board; drag them back to return them.
+- Right-drag from an amber output port to a compatible green input port.
+- The first production recipe makes a horseshoe using iron, coal, the furnace and the hammer.
+- Each successful horseshoe consumes one iron and one coal. The furnace and hammer remain available.
+- Material cards show their current stack quantity.
 
-- Five initial cards: Железо, Уголь, Молот, Нагрев, Заготовка.
-- Newly discovered operations are added directly to the hand/inventory.
-- A card can be placed independently in the production and research layouts.
-- Left-drag a card from the hand to the board to place it.
-- Left-drag a board card to move it.
-- Drag a board card into the bottom hand zone to return it.
-- Returning a card removes its connections in the active mode.
+### Economy and trader
+- New game starts with 100 coins, 3 iron and 3 coal.
+- Open **ТОРГОВЕЦ** in the header.
+- Buy iron for 12 coins or coal for 5 coins.
+- Sell all produced horseshoes for 30 coins each.
+- The current prices are prototype balance values and will be tuned during playtesting.
 
-### Directed engineering graph
+### Saving
+- Open the trader panel and choose **Сохранить игру** to save the current workshop.
+- The game attempts to load the latest save automatically on startup.
+- The save contains money, cards and quantities, both board layouts, both sets of links, research discoveries and the next card ID.
+- **Загрузить сохранение** restores the latest save.
 
-- Right-drag from one board card to another to create a directed connection.
-- The arrow indicates flow from the source card's output to the target card's input.
-- Connection endpoints show output/input ports.
-- Branches and merges are supported by the graph structure.
-- The current graph integrity check verifies that all placed nodes belong to one connected network.
-
-### Production mode
-
-- The first recipe remains Katrina's horseshoe.
-- Required cards: Железо, Уголь, Молот, Нагрев, Заготовка.
-- The current prototype checks for all five cards, a connected network, and at least one directed connection.
-- On success, Железо, Уголь and Заготовка are consumed; Молот and Нагрев remain; Подкова appears on the board.
-- Production consumes materials. The current horseshoe check is still a prototype recipe check; it does not yet validate a specific operation sequence or calculate item quality.
-
-### Research mode
-
-- Uses the same engineering workspace, but has a separate layout and separate directed connections from production.
+### Research
 - Experiments are immediate and do not consume materials.
-- Before running an experiment, directed links show the proposed flow and the status line gives preliminary feedback.
-- A successful first guided experiment with Железо, Нагрев and Молот on one connected board discovers Ковка.
-- The discovered operation is added to the shared hand/inventory and the discovery is recorded in the journal.
-- An unsuccessful experiment leaves the layout intact and gives a small hint.
-- The journal records discoveries; saving full reusable blueprints is not implemented yet.
+- The first guided discovery with iron, furnace and hammer unlocks the forging operation and records it in the journal.
 
 ## Controls
-
-- **Left mouse button:** move/place/return cards; switch modes and open the journal.
-- **Right mouse button:** drag from a source card to a target card to create a directed link.
-- **Выполнить:** run the current production recipe check.
-- **Эксперимент:** run the current research experiment.
-- **Журнал:** view discovered operations.
+- **Left mouse button:** move/place/return cards; switch modes; open the journal and trader.
+- **Right mouse button:** drag from an output to a compatible input to create a connection.
+- **Выполнить:** run the production recipe.
+- **Испытать:** run a research experiment.
+- **Торговец:** buy materials, sell all horseshoes, save or load.
 
 ## Run
-
 Open this folder in Godot 4.6 and run the project (F6/F5). The main scene is `scenes/board_prototype.tscn`.
 
-## Known prototype limits
-
-- Mode layouts are kept separately during the running session; persistent save/load is not implemented.
-- Research discovery currently contains one guided example, not a general material/operation simulation.
-- Input/output ports are represented visually by link endpoints; typed port compatibility rules are a later step.
-- Research discoveries are journaled, but full blueprint save/load and the remaining four craft tasks are not implemented yet.
-
-
-## Visual readability pass
-
-- The board now uses a restrained forge-workshop palette with a subtle grid and clearer separation between header, work area, status and hand.
-- Card categories have distinct color bands and silhouettes: blue-grey materials, ochre tools, rust operations, sage blanks/objects and brass finished products.
-- Board nodes visibly distinguish input (green) and output (amber) ports; directed links have arrows and a legend.
-- The two workspace modes now have clear subtitles describing their different purpose and resource rules.
-- Cards show whether they are in the hand or placed as a node, and the hand has a clearer inventory label.
-- These are drawn vector placeholders for readability, not final production art.
+## Current limits
+- This is an early playable economy slice, not a complete game.
+- There is one product and fixed prototype prices; no orders, customers, dynamic market or upgrades yet.
+- Save/load is a simple versioned JSON save in the Godot user data directory.
+- The prototype has not yet been runtime-tested in Godot as part of this update.
