@@ -3,6 +3,7 @@ extends Control
 const CARD_SIZE := Vector2(116, 148)
 const HAND_HEIGHT := 178.0
 const HEADER_HEIGHT := 64.0
+const STATUS_HEIGHT := 30.0
 const BOARD_MARGIN := 28.0
 
 const BG := Color("#171b20")
@@ -23,6 +24,8 @@ var drag_from_hand := false
 var drag_offset := Vector2.ZERO
 var drag_position := Vector2.ZERO
 var connecting_from_id := -1
+var execute_button_held := false
+var execution_message := "Собери схему и нажми «Выполнить»."
 var mouse_position := Vector2.ZERO
 
 var font: Font
@@ -69,6 +72,11 @@ func _gui_input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		mouse_position = event.position
 		if event.pressed:
+			if _execute_button_rect().has_point(mouse_position):
+				execute_button_held = true
+				accept_event()
+				queue_redraw()
+				return
 			var hit := _card_at(mouse_position)
 			if not hit.is_empty():
 				drag_card_id = int(hit.id)
@@ -84,6 +92,13 @@ func _gui_input(event: InputEvent) -> void:
 				drag_position = mouse_position - drag_offset
 				accept_event()
 		else:
+			if execute_button_held:
+				if _execute_button_rect().has_point(mouse_position):
+					_execute_scheme()
+				execute_button_held = false
+				accept_event()
+				queue_redraw()
+				return
 			if drag_card_id != -1:
 				_finish_card_drag(mouse_position)
 				accept_event()
@@ -105,6 +120,40 @@ func _gui_input(event: InputEvent) -> void:
 				connecting_from_id = -1
 				accept_event()
 				queue_redraw()
+
+
+func _execute_button_rect() -> Rect2:
+	return Rect2(Vector2(size.x - 178.0, 12.0), Vector2(150.0, 40.0))
+
+
+func _execute_scheme() -> void:
+	var board_cards: Array[Dictionary] = []
+	var degrees: Dictionary = {}
+	for card in cards:
+		if card.place == "board":
+			board_cards.append(card)
+			degrees[int(card.id)] = 0
+
+	if board_cards.size() < 2:
+		execution_message = "Нужно разместить на поле хотя бы две карты."
+		return
+
+	var valid_links := 0
+	for link in links:
+		var parts := link.split(":")
+		var a_id := int(parts[0])
+		var b_id := int(parts[1])
+		if degrees.has(a_id) and degrees.has(b_id):
+			degrees[a_id] = int(degrees[a_id]) + 1
+			degrees[b_id] = int(degrees[b_id]) + 1
+			valid_links += 1
+
+	for card_id in degrees:
+		if int(degrees[card_id]) == 0:
+			execution_message = "Проверь связи: у каждой карты на поле должна быть хотя бы одна связь."
+			return
+
+	execution_message = "СХЕМА ПРИНЯТА · %d карт, %d связей. Это проверка структуры — изготовление предмета добавим отдельно." % [board_cards.size(), valid_links]
 
 
 func _finish_card_drag(release_position: Vector2) -> void:
@@ -165,7 +214,7 @@ func _hand_card_rect(index: int, count: int) -> Rect2:
 
 
 func _board_rect() -> Rect2:
-	return Rect2(BOARD_MARGIN, HEADER_HEIGHT, size.x - BOARD_MARGIN * 2.0, size.y - HAND_HEIGHT - HEADER_HEIGHT)
+	return Rect2(BOARD_MARGIN, HEADER_HEIGHT, size.x - BOARD_MARGIN * 2.0, size.y - HAND_HEIGHT - HEADER_HEIGHT - STATUS_HEIGHT)
 
 
 func _hand_rect() -> Rect2:
@@ -210,7 +259,11 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), BG)
 	draw_rect(Rect2(0, 0, size.x, HEADER_HEIGHT), Color("#111519"))
 	draw_string(font, Vector2(28, 39), "КУЗНЯ  /  ИНЖЕНЕРНОЕ ПОЛЕ", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, CARD_BORDER)
-	draw_string(font, Vector2(size.x - 28, 38), "ПРОТОТИП 01", HORIZONTAL_ALIGNMENT_RIGHT, -1, 12, MUTED)
+	var button_rect := _execute_button_rect()
+	var button_color := ACCENT if execute_button_held else Color("#8c6338")
+	draw_rect(button_rect, button_color)
+	draw_rect(button_rect, CARD_BORDER, false, 1.0)
+	draw_string(font, button_rect.position + Vector2(19, 26), "ВЫПОЛНИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, INK)
 
 	var board := _board_rect()
 	draw_rect(board, BOARD_BG)
@@ -221,6 +274,9 @@ func _draw() -> void:
 	for card in cards:
 		if card.place == "board" and int(card.id) != drag_card_id:
 			_draw_card(card, Vector2(card.position) - CARD_SIZE * 0.5)
+
+	draw_rect(Rect2(0.0, size.y - HAND_HEIGHT - STATUS_HEIGHT, size.x, STATUS_HEIGHT), Color("#151a1f"))
+	draw_string(font, Vector2(28, size.y - HAND_HEIGHT - 10), execution_message, HORIZONTAL_ALIGNMENT_LEFT, size.x - 56, 11, ACCENT if execution_message.begins_with("СХЕМА ПРИНЯТА") else MUTED)
 
 	_draw_hand()
 	if drag_card_id != -1:
