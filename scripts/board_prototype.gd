@@ -239,6 +239,7 @@ func _handle_market_click(point: Vector2) -> void:
 		_sell_horseshoes()
 	elif _market_action_rect(3).has_point(point):
 		_save_game()
+		execution_message = "Игра сохранена."
 	elif _market_action_rect(4).has_point(point):
 		_load_game()
 
@@ -295,7 +296,6 @@ func _save_game() -> void:
 		execution_message = "Не удалось сохранить игру."
 		return
 	file.store_string(JSON.stringify(payload))
-	execution_message = "Игра сохранена."
 
 
 func _load_game() -> void:
