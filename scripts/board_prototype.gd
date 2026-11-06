@@ -344,7 +344,7 @@ func _hand_cards() -> Array[Dictionary]:
 
 func _hand_card_rect(index: int, count: int) -> Rect2:
 	var usable_width := maxf(240.0, size.x - 80.0)
-	var step := minf(104.0, usable_width / maxf(1.0, float(count)))
+	var step := minf(124.0, usable_width / maxf(1.0, float(count)))
 	var total_width := CARD_SIZE.x + step * maxf(0, count - 1)
 	var start_x := (size.x - total_width) * 0.5
 	var x := start_x + step * index
