@@ -1183,7 +1183,7 @@ func _draw_market() -> void:
 		draw_rect(tip, Color("#11140f"))
 		draw_rect(tip, Color("#d0a15e"), false, 2.0)
 		draw_string(font, tip.position + Vector2(12, 22), hovered_title, HORIZONTAL_ALIGNMENT_LEFT, 246, 13, ACCENT)
-		draw_multiline_string(font, tip.position + Vector2(12, 42), _trade_item_description(hovered_title), HORIZONTAL_ALIGNMENT_LEFT, 246, 10, CARD_BORDER)
+		draw_multiline_string(font, tip.position + Vector2(12, 42), _trade_item_description(hovered_title), HORIZONTAL_ALIGNMENT_LEFT, 246, 10, 0, CARD_BORDER)
 
 
 func _draw_journal() -> void:
