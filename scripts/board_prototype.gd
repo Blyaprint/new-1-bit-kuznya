@@ -973,24 +973,48 @@ func _draw_card_emblem(category: String, center: Vector2, color: Color) -> void:
 
 
 func _draw_market() -> void:
-	var panel := _market_panel_rect()
-	draw_rect(panel, Color("#171b15"))
-	draw_rect(panel, Color("#d0a15e"), false, 2.0)
-	draw_rect(Rect2(panel.position, Vector2(panel.size.x, 48.0)), Color("#4a3a27"))
-	draw_string(font, panel.position + Vector2(20, 30), "ТОРГОВЕЦ", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, CARD_BORDER)
-	var labels := [
-		"Купить железо — %d монет" % IRON_BUY_PRICE,
-		"Купить уголь — %d монет" % COAL_BUY_PRICE,
-		"Продать все подковы — %d за штуку" % HORSESHOE_SELL_PRICE,
-		"Сохранить игру",
-		"Загрузить сохранение"
-	]
-	for i in range(labels.size()):
-		var rect := _market_action_rect(i)
-		draw_rect(rect, Color("#394237"))
-		draw_rect(rect, Color("#b89a68"), false, 1.0)
-		draw_string(font, rect.position + Vector2(12, 24), labels[i], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24, 11, CARD_BORDER)
-	draw_string(font, panel.position + Vector2(24, panel.size.y - 14), "Деньги: %d монет" % money, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, ACCENT)
+	var player_panel := _trade_player_panel()
+	var merchant_panel := _trade_merchant_panel()
+	# Darkened backdrop makes the trader a separate modal window.
+	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.62))
+	draw_rect(Rect2(player_panel.position - Vector2(12, 42), Vector2(merchant_panel.end.x - player_panel.position.x + 24, 470)), Color("#171b15"))
+	draw_rect(Rect2(player_panel.position - Vector2(12, 42), Vector2(merchant_panel.end.x - player_panel.position.x + 24, 470)), Color("#d0a15e"), false, 2.0)
+	draw_string(font, player_panel.position + Vector2(0, -14), "ОБМЕН", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, CARD_BORDER)
+	draw_string(font, player_panel.position + Vector2(0, 20), "ТВОЙ ИНВЕНТАРЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, ACCENT)
+	draw_string(font, merchant_panel.position + Vector2(0, 20), "ТОРГОВЕЦ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, ACCENT)
+	draw_string(font, player_panel.position + Vector2(0, 43), "Перетащи предмет направо, чтобы продать", HORIZONTAL_ALIGNMENT_LEFT, 300, 9, MUTED)
+	draw_string(font, merchant_panel.position + Vector2(0, 43), "Перетащи предмет налево, чтобы купить", HORIZONTAL_ALIGNMENT_LEFT, 300, 9, MUTED)
+	var player_items := _player_trade_items()
+	for i in range(player_items.size()):
+		var item: Dictionary = player_items[i]
+		var row := _trade_row_rect(player_panel, i)
+		draw_rect(row, Color("#394237"))
+		draw_rect(row, Color("#b89a68"), false, 1.0)
+		draw_string(font, row.position + Vector2(10, 16), str(item.title), HORIZONTAL_ALIGNMENT_LEFT, 180, 11, CARD_BORDER)
+		draw_string(font, row.position + Vector2(10, 31), "Количество: %d" % int(item.quantity), HORIZONTAL_ALIGNMENT_LEFT, 180, 9, MUTED)
+		draw_string(font, row.position + Vector2(row.size.x - 70, 25), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_RIGHT, 60, 8, ACCENT)
+	var merchant_titles := ["Железо", "Уголь", "Молот", "Горн"]
+	for i in range(merchant_titles.size()):
+		var title: String = merchant_titles[i]
+		var row := _trade_row_rect(merchant_panel, i)
+		draw_rect(row, Color("#394237"))
+		draw_rect(row, Color("#b89a68"), false, 1.0)
+		var details := ""
+		match title:
+			"Железо":
+				details = "2 шт. / 1 монета"
+			"Уголь":
+				details = "5 шт. / 1 монета"
+			"Молот":
+				details = "%d монеты" % TOOL_BUY_PRICE
+			"Горн":
+				details = "%d монеты" % FURNACE_BUY_PRICE
+		draw_string(font, row.position + Vector2(10, 16), title, HORIZONTAL_ALIGNMENT_LEFT, 180, 11, CARD_BORDER)
+		draw_string(font, row.position + Vector2(10, 31), details, HORIZONTAL_ALIGNMENT_LEFT, 180, 9, MUTED)
+		draw_string(font, row.position + Vector2(row.size.x - 70, 25), "КУПИТЬ", HORIZONTAL_ALIGNMENT_RIGHT, 60, 8, ACCENT)
+	draw_string(font, player_panel.position + Vector2(0, 390), "Баланс: %d монет" % money, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ACCENT)
+	draw_string(font, merchant_panel.position + Vector2(0, 390), "Цены скупки низкие — проверь стоимость до обмена", HORIZONTAL_ALIGNMENT_LEFT, 300, 9, MUTED)
+	draw_string(font, Vector2(merchant_panel.end.x - 70, player_panel.position.y - 14), "ЗАКРЫТЬ", HORIZONTAL_ALIGNMENT_RIGHT, 70, 10, CARD_BORDER)
 
 
 func _draw_journal() -> void:
