@@ -48,7 +48,7 @@ func _ready() -> void:
 	_add_card("Уголь", "МАТЕРИАЛ")
 	_add_card("Молот", "ИНСТРУМЕНТ")
 	_add_card("Горн", "ОПЕРАЦИЯ")
-	_add_card("Ковка", "ОПЕРАЦИЯ")
+	_add_card("Наковальня", "ИНСТРУМЕНТ")
 	queue_redraw()
 
 
@@ -209,7 +209,7 @@ func _execute_production() -> void:
 		execution_message = "Размести на поле хотя бы две карты."
 		return
 
-	var required := ["Железо", "Уголь", "Молот", "Нагрев", "Заготовка"]
+	var required := ["Железо", "Уголь", "Молот", "Горн"]
 	for title in required:
 		if not by_title.has(title):
 			execution_message = "Для подковы не хватает карты «%s»." % title
@@ -217,16 +217,14 @@ func _execute_production() -> void:
 	# Typed sockets model the actual workshop process.
 	var required_links := [
 		"%d:0:%d:0" % [int(by_title["Уголь"].id), int(by_title["Горн"].id)],
-		"%d:0:%d:1" % [int(by_title["Железо"].id), int(by_title["Горн"].id)],
-		"%d:0:%d:0" % [int(by_title["Горн"].id), int(by_title["Ковка"].id)],
-		"%d:0:%d:1" % [int(by_title["Молот"].id), int(by_title["Ковка"].id)]
+		"%d:0:%d:0" % [int(by_title["Горн"].id), int(by_title["Железо"].id)],
+		"%d:0:%d:1" % [int(by_title["Молот"].id), int(by_title["Железо"].id)]
 	]
 	var missing_steps: Array[String] = []
 	var step_names := [
-		"Уголь: Топливо → Горн: Топливо",
-		"Железо: Заготовка → Горн: Заготовка",
-		"Горн: Нагретый металл → Ковка: Нагретый металл",
-		"Молот: Удар → Ковка: Удар"
+		"Уголь подаёт горючее в горн",
+		"Горн передаёт температуру железу",
+		"Молот передаёт силу железу"
 	]
 	for i in range(required_links.size()):
 		if not production_links.has(required_links[i]):
@@ -235,11 +233,10 @@ func _execute_production() -> void:
 		execution_message = "Подкова не готова. Не хватает этапов: %s." % "; ".join(missing_steps)
 		return
 
-	var blank_position: Vector2 = Vector2(by_title["Ковка"].production_position)
+	var blank_position: Vector2 = Vector2(by_title["Железо"].production_position)
 	var consumed_ids := [
 		int(by_title["Железо"].id),
-		int(by_title["Уголь"].id),
-		int(by_title["Горн"].id), int(by_title["Ковка"].id)
+		int(by_title["Уголь"].id)
 	]
 	for card in cards.duplicate():
 		if consumed_ids.has(int(card.id)):
@@ -250,7 +247,7 @@ func _execute_production() -> void:
 	var result_card: Dictionary = cards.back()
 	result_card.production_place = "board"
 	result_card.production_position = blank_position
-	execution_message = "Подкова изготовлена. Железо, уголь и заготовка израсходованы; молот и нагрев сохранены."
+	execution_message = "Подкова изготовлена. Железо и уголь израсходованы; горн и молот сохранены."
 
 
 func _run_experiment() -> void:
@@ -266,7 +263,7 @@ func _run_experiment() -> void:
 	for card in board_cards:
 		titles.append(str(card.title))
 	var has_iron := titles.has("Железо")
-	var has_heat := titles.has("Нагрев")
+	var has_heat := titles.has("Горн")
 	var has_hammer := titles.has("Молот")
 
 	# First guided discovery: an iron + heat + hammer experiment reveals forging.
@@ -325,28 +322,30 @@ func _finish_card_drag(release_position: Vector2) -> void:
 	drag_card_id = -1
 
 
-func _input_ports(card: Dictionary) -> Array[String]:
+func _input_ports(card: Dictionary) -> Array[Dictionary]:
+	# Железу нужны два независимых воздействия: нагрев и сила.
 	match str(card.title):
 		"Горн":
-			return ["Топливо", "Заготовка"]
-		"Ковка":
-			return ["Нагретый металл", "Удар"]
+			return [{"label": "Топливо", "kind": "fuel"}]
+		"Железо":
+			return [
+				{"label": "Температура", "kind": "temperature"},
+				{"label": "Сила", "kind": "force"}
+			]
 		_:
 			return []
 
 
-func _output_ports(card: Dictionary) -> Array[String]:
+func _output_ports(card: Dictionary) -> Array[Dictionary]:
 	match str(card.title):
 		"Уголь":
-			return ["Топливо"]
-		"Железо":
-			return ["Заготовка"]
-		"Молот":
-			return ["Удар"]
+			return [{"label": "Горючее", "kind": "fuel"}]
 		"Горн":
-			return ["Нагретый металл"]
-		"Ковка":
-			return ["Подкова"]
+			return [{"label": "Тепло", "kind": "temperature"}]
+		"Молот":
+			return [{"label": "Сила", "kind": "force"}]
+		"Железо":
+			return [{"label": "Результат", "kind": "product"}]
 		_:
 			return []
 
@@ -367,7 +366,7 @@ func _port_at(point: Vector2, is_output: bool) -> Dictionary:
 		var ports := _output_ports(card) if is_output else _input_ports(card)
 		for i in range(ports.size()):
 			if point.distance_to(_port_position(card, is_output, i)) <= 16.0:
-				return {"id": card.id, "title": card.title, "port_index": i, "port_label": ports[i]}
+				return {"id": card.id, "title": card.title, "port_index": i, "port_label": str(ports[i].label)}
 	return {}
 
 
@@ -449,17 +448,33 @@ func _add_directed_link(from_id: int, from_port: int, to_id: int, to_port: int) 
 	var to_card := _card_by_id(to_id)
 	if from_card.is_empty() or to_card.is_empty():
 		return
-	var output_name := _output_ports(from_card)[from_port]
-	var input_name := _input_ports(to_card)[to_port]
-	if output_name != input_name:
-		execution_message = "Несовместимые точки: «%s» не подходит к «%s»." % [output_name, input_name]
+	var outputs := _output_ports(from_card)
+	var inputs := _input_ports(to_card)
+	if from_port < 0 or from_port >= outputs.size() or to_port < 0 or to_port >= inputs.size():
+		return
+	var output_data: Dictionary = outputs[from_port]
+	var input_data: Dictionary = inputs[to_port]
+	if str(output_data.kind) != str(input_data.kind):
+		execution_message = "Несовместимые сигналы: «%s» не подходит ко входу «%s»." % [output_data.label, input_data.label]
 		return
 	var key := "%d:%d:%d:%d" % [from_id, from_port, to_id, to_port]
 	var current := _active_links()
 	if not current.has(key):
 		current.append(key)
 		_set_active_links(current)
-		execution_message = "Совместимость подтверждена: %s → %s." % [output_name, input_name]
+		execution_message = _connection_description(str(from_card.title), str(to_card.title), str(output_data.kind))
+
+
+func _connection_description(source: String, target: String, kind: String) -> String:
+	match kind:
+		"fuel":
+			return "Уголь подаёт горючее в горн."
+		"temperature":
+			return "Горн передаёт тепло железу."
+		"force":
+			return "Молот передаёт силу железу."
+		_:
+			return "%s передаёт результат карте «%s»." % [source, target]
 
 
 func _remove_links_for_card(graph_links: Array[String], card_id: int) -> void:
@@ -623,11 +638,14 @@ func _draw_card(card: Dictionary, top_left: Vector2, on_board := false) -> void:
 		for i in range(inputs.size()):
 			var p := _port_position(card, false, i)
 			draw_circle(p, 6.0, Color("#82b8a0"))
-			draw_string(font, Vector2(top_left.x + 7, p.y - top_left.y - 9), inputs[i], HORIZONTAL_ALIGNMENT_LEFT, 58, 8, Color("#34483f"))
+			draw_string(font, Vector2(top_left.x + 7, p.y - top_left.y - 9), str(inputs[i].label), HORIZONTAL_ALIGNMENT_LEFT, 58, 8, Color("#34483f"))
 		for i in range(outputs.size()):
 			var p := _port_position(card, true, i)
 			draw_circle(p, 6.0, ACCENT)
-			draw_string(font, Vector2(top_left.x + CARD_SIZE.x - 66, p.y - top_left.y - 9), outputs[i], HORIZONTAL_ALIGNMENT_RIGHT, 58, 8, Color("#594126"))
+			draw_string(font, Vector2(top_left.x + CARD_SIZE.x - 66, p.y - top_left.y - 9), str(outputs[i].label), HORIZONTAL_ALIGNMENT_RIGHT, 58, 8, Color("#594126"))
+		if str(card.category) == "МАТЕРИАЛ":
+			draw_string(font, top_left + Vector2(8, 47), "СВОЙСТВА", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 8, Color("#46504a"))
+			draw_string(font, top_left + Vector2(8, 59), "Температура · прочность", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 8, Color("#46504a"))
 
 
 func _category_color(category: String) -> Color:
