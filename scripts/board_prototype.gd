@@ -40,6 +40,7 @@ var money := 5
 var trader_stock := {"Железо": 99, "Уголь": 99, "Молот": 99, "Горн": 99}
 var trade_drag_source := ""
 var trade_drag_title := ""
+var trade_drag_position := Vector2.ZERO
 var selected_recipe := "Подкова"
 var drag_card_id := -1
 var drag_from_hand := false
@@ -104,7 +105,11 @@ func _set_active_links(value: Array[String]) -> void:
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		mouse_position = event.position
-		if drag_card_id != -1:
+		if market_open and trade_drag_source != "":
+			trade_drag_position = mouse_position
+			accept_event()
+			queue_redraw()
+		elif drag_card_id != -1:
 			drag_position = mouse_position - drag_offset
 			accept_event()
 			queue_redraw()
@@ -124,6 +129,7 @@ func _gui_input(event: InputEvent) -> void:
 			if market_open:
 				trade_drag_source = ""
 				trade_drag_title = ""
+				trade_drag_position = mouse_position
 				if _trade_close_rect().has_point(mouse_position) or not _trade_window_rect().has_point(mouse_position):
 					market_open = false
 					accept_event()
@@ -135,6 +141,7 @@ func _gui_input(event: InputEvent) -> void:
 				elif _trade_merchant_row_at(mouse_position) != "":
 					trade_drag_source = "merchant"
 					trade_drag_title = _trade_merchant_row_at(mouse_position)
+				trade_drag_position = mouse_position
 				accept_event()
 				queue_redraw()
 				return
@@ -287,7 +294,30 @@ func _trade_merchant_panel() -> Rect2:
 
 
 func _trade_row_rect(panel: Rect2, index: int) -> Rect2:
-	return Rect2(panel.position + Vector2(16.0, 62.0 + index * 42.0), Vector2(panel.size.x - 32.0, 36.0))
+	var columns := 4
+	var slot_size := 62.0
+	var gap := 8.0
+	return Rect2(panel.position + Vector2(16.0 + (index % columns) * (slot_size + gap), 62.0 + floor(float(index) / columns) * (slot_size + gap)), Vector2(slot_size, slot_size))
+
+
+func _trade_item_description(title: String) -> String:
+	match title:
+		"Железо":
+			return "Кусок железа для изготовления изделий. Покупка: 2 шт. за 1 монету."
+		"Уголь":
+			return "Топливо для горна. Покупка: 5 шт. за 1 монету."
+		"Молот":
+			return "Инструмент для передачи силы заготовке. Прочность: 6 рабочих циклов."
+		"Горн":
+			return "Нагревает металл. Прочность: 6 рабочих циклов."
+		"Подкова":
+			return "Готовое изделие. Торговец покупает по 2 монеты за штуку."
+		"Гвозди":
+			return "Партия из пяти гвоздей. Торговец покупает по 1 монете за партию."
+		"Скоба":
+			return "Крепёжная скоба. Торговец покупает по 1 монете за две штуки."
+		_:
+			return "Предмет из мастерской."
 
 
 func _player_trade_items() -> Array[Dictionary]:
@@ -1071,7 +1101,6 @@ func _trade_sale_hint(title: String, quantity: int) -> String:
 func _draw_market() -> void:
 	var player_panel := _trade_player_panel()
 	var merchant_panel := _trade_merchant_panel()
-	# Darkened backdrop makes the trader a separate modal window.
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.62))
 	draw_rect(_trade_window_rect(), Color("#171b15"))
 	draw_rect(_trade_window_rect(), Color("#d0a15e"), false, 2.0)
@@ -1080,45 +1109,76 @@ func _draw_market() -> void:
 	draw_string(font, merchant_panel.position + Vector2(0, 20), "ТОРГОВЕЦ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, ACCENT)
 	draw_string(font, player_panel.position + Vector2(0, 43), "Перетащи предмет направо, чтобы продать", HORIZONTAL_ALIGNMENT_LEFT, 300, 9, MUTED)
 	draw_string(font, merchant_panel.position + Vector2(0, 43), "Перетащи предмет налево, чтобы купить", HORIZONTAL_ALIGNMENT_LEFT, 300, 9, MUTED)
+	var hovered_title := ""
+	var hovered_category := "МАТЕРИАЛ"
 	var player_items := _player_trade_items()
 	for i in range(player_items.size()):
 		var item: Dictionary = player_items[i]
-		var row := _trade_row_rect(player_panel, i)
-		draw_rect(row, Color("#394237"))
-		draw_rect(row, Color("#b89a68"), false, 1.0)
-		draw_string(font, row.position + Vector2(10, 14), str(item.title), HORIZONTAL_ALIGNMENT_LEFT, 180, 11, CARD_BORDER)
-		draw_string(font, row.position + Vector2(10, 28), "×%d · %s" % [int(item.quantity), _trade_sale_hint(str(item.title), int(item.quantity))], HORIZONTAL_ALIGNMENT_LEFT, 230, 8, MUTED)
-		draw_string(font, row.position + Vector2(row.size.x - 70, 23), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_RIGHT, 60, 8, ACCENT)
+		var slot := _trade_row_rect(player_panel, i)
+		var is_dragged := trade_drag_source == "player" and trade_drag_title == str(item.title)
+		draw_rect(slot, Color("#252b24"))
+		draw_rect(slot, Color("#b89a68") if slot.has_point(mouse_position) and not is_dragged else Color("#59604f"), false, 2.0 if slot.has_point(mouse_position) else 1.0)
+		var item_color := _category_color(str(item.category))
+		draw_rect(Rect2(slot.position + Vector2(7, 7), Vector2(48, 48)), Color("#45483b"))
+		_draw_card_emblem(str(item.category), slot.position + Vector2(31, 29), item_color)
+		if int(item.quantity) > 1:
+			draw_string(font, slot.position + Vector2(34, 58), "×%d" % int(item.quantity), HORIZONTAL_ALIGNMENT_RIGHT, 25, 10, CARD_BORDER)
+		if slot.has_point(mouse_position) and not is_dragged:
+			hovered_title = str(item.title)
+			hovered_category = str(item.category)
 	var merchant_titles := _merchant_trade_titles()
 	for i in range(merchant_titles.size()):
 		var title: String = merchant_titles[i]
-		var row := _trade_row_rect(merchant_panel, i)
-		draw_rect(row, Color("#394237"))
-		draw_rect(row, Color("#b89a68"), false, 1.0)
-		var details := ""
-		match title:
-			"Железо":
-				details = "2 шт. / 1 монета"
-			"Уголь":
-				details = "5 шт. / 1 монета"
-			"Молот":
-				details = "%d монеты" % TOOL_BUY_PRICE
-			"Горн":
-				details = "%d монеты" % FURNACE_BUY_PRICE
-			"Подкова":
-				details = "1 шт. / 3 монеты"
-			"Гвозди":
-				details = "5 шт. / 2 монеты"
-			"Скоба":
-				details = "2 шт. / 2 монеты"
-		draw_string(font, row.position + Vector2(10, 14), title, HORIZONTAL_ALIGNMENT_LEFT, 180, 11, CARD_BORDER)
-		draw_string(font, row.position + Vector2(10, 28), "%s · В наличии: %d" % [details, int(trader_stock.get(title, 0))], HORIZONTAL_ALIGNMENT_LEFT, 210, 8, MUTED)
-		draw_string(font, row.position + Vector2(row.size.x - 70, 23), "КУПИТЬ", HORIZONTAL_ALIGNMENT_RIGHT, 60, 8, ACCENT)
+		var slot := _trade_row_rect(merchant_panel, i)
+		var is_dragged := trade_drag_source == "merchant" and trade_drag_title == title
+		draw_rect(slot, Color("#252b24"))
+		draw_rect(slot, Color("#b89a68") if slot.has_point(mouse_position) and not is_dragged else Color("#59604f"), false, 2.0 if slot.has_point(mouse_position) else 1.0)
+		var category := "МАТЕРИАЛ"
+		if title == "Молот":
+			category = "ИНСТРУМЕНТ"
+		elif title == "Горн":
+			category = "ОПЕРАЦИЯ"
+		elif ["Подкова", "Гвозди", "Скоба"].has(title):
+			category = "ИЗДЕЛИЕ"
+		draw_rect(Rect2(slot.position + Vector2(7, 7), Vector2(48, 48)), Color("#45483b"))
+		_draw_card_emblem(category, slot.position + Vector2(31, 29), _category_color(category))
+		draw_string(font, slot.position + Vector2(4, 58), str(trader_stock.get(title, 0)), HORIZONTAL_ALIGNMENT_RIGHT, 52, 9, CARD_BORDER)
+		if slot.has_point(mouse_position) and not is_dragged:
+			hovered_title = title
+			hovered_category = category
 	draw_string(font, player_panel.position + Vector2(0, 403), "Баланс: %d монет" % money, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ACCENT)
-	draw_string(font, merchant_panel.position + Vector2(0, 403), "Цены скупки низкие", HORIZONTAL_ALIGNMENT_LEFT, 230, 9, MUTED)
+	draw_string(font, merchant_panel.position + Vector2(0, 403), "Предметы в квадратных ячейках", HORIZONTAL_ALIGNMENT_LEFT, 230, 9, MUTED)
 	draw_rect(_trade_close_rect(), Color("#4a3a27"))
 	draw_rect(_trade_close_rect(), Color("#b89a68"), false, 1.0)
 	draw_string(font, _trade_close_rect().position + Vector2(7, 19), "ЗАКРЫТЬ", HORIZONTAL_ALIGNMENT_CENTER, 66, 9, CARD_BORDER)
+	if trade_drag_source != "" and trade_drag_title != "":
+		var drag_rect := Rect2(trade_drag_position - Vector2(31, 31), Vector2(62, 62))
+		draw_rect(drag_rect, Color("#c5a36c"))
+		draw_rect(drag_rect, Color("#fff0c8"), false, 2.0)
+		draw_rect(Rect2(drag_rect.position + Vector2(7, 7), Vector2(48, 48)), Color("#45483b"))
+		var drag_category := "МАТЕРИАЛ"
+		if trade_drag_source == "player":
+			for item in player_items:
+				if str(item.title) == trade_drag_title:
+					drag_category = str(item.category)
+		else:
+			if trade_drag_title == "Молот":
+				drag_category = "ИНСТРУМЕНТ"
+			elif trade_drag_title == "Горн":
+				drag_category = "ОПЕРАЦИЯ"
+			elif ["Подкова", "Гвозди", "Скоба"].has(trade_drag_title):
+				drag_category = "ИЗДЕЛИЕ"
+		_draw_card_emblem(drag_category, drag_rect.position + Vector2(31, 29), _category_color(drag_category))
+	elif hovered_title != "":
+		var tip := Rect2(mouse_position + Vector2(18, 16), Vector2(270, 92))
+		if tip.end.x > size.x:
+			tip.position.x = mouse_position.x - tip.size.x - 18
+		if tip.end.y > size.y:
+			tip.position.y = mouse_position.y - tip.size.y - 16
+		draw_rect(tip, Color("#11140f"))
+		draw_rect(tip, Color("#d0a15e"), false, 2.0)
+		draw_string(font, tip.position + Vector2(12, 22), hovered_title, HORIZONTAL_ALIGNMENT_LEFT, 246, 13, ACCENT)
+		draw_multiline_string(font, tip.position + Vector2(12, 42), _trade_item_description(hovered_title), HORIZONTAL_ALIGNMENT_LEFT, 246, 10, CARD_BORDER)
 
 
 func _draw_journal() -> void:
