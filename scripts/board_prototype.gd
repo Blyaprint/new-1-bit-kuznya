@@ -451,12 +451,16 @@ func _load_game() -> void:
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if typeof(parsed) != TYPE_DICTIONARY or int(parsed.get("version", 0)) != 1:
 		return
-	money = maxi(0, int(parsed.get("money", 5)))
+	# One-time migration from the previous trader-less save format:
+	# preserve the workshop, but apply the new starting balance.
+	if parsed.has("trader_stock"):
+		money = maxi(0, int(parsed.get("money", 5)))
+		trader_stock = parsed.trader_stock
+	else:
+		money = 5
 	selected_recipe = str(parsed.get("selected_recipe", "Подкова"))
 	if not ["Подкова", "Гвозди", "Скоба"].has(selected_recipe):
 		selected_recipe = "Подкова"
-	if parsed.has("trader_stock"):
-		trader_stock = parsed.trader_stock
 	cards.clear()
 	for raw_card in parsed.get("cards", []):
 		if typeof(raw_card) != TYPE_DICTIONARY:
