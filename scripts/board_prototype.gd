@@ -74,7 +74,7 @@ func _gui_input(event: InputEvent) -> void:
 				drag_card_id = int(hit.id)
 				drag_from_hand = hit.place == "hand"
 				if drag_from_hand:
-					drag_offset = Vector2.ZERO
+					drag_offset = CARD_SIZE * 0.5
 				else:
 					drag_offset = mouse_position - Vector2(hit.position)
 				drag_position = mouse_position - drag_offset
