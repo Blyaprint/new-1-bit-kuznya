@@ -614,15 +614,3 @@ func _draw_journal() -> void:
 		for i in range(discoveries.size()):
 			draw_circle(panel.position + Vector2(22, 59 + i * 24), 4.0, OPERATION_COLOR)
 			draw_string(font, panel.position + Vector2(36, 63 + i * 24), discoveries[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, CARD_BORDER)
-
-
-func _draw_journal() -> void:
-	var panel := Rect2(size.x - 330.0, 72.0, 300.0, 220.0)
-	draw_rect(panel, Color("#111519"))
-	draw_rect(panel, CARD_BORDER, false, 1.0)
-	draw_string(font, panel.position + Vector2(16, 28), "ЖУРНАЛ ОТКРЫТИЙ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, CARD_BORDER)
-	if discoveries.is_empty():
-		draw_string(font, panel.position + Vector2(16, 58), "Пока нет открытий.", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, MUTED)
-	else:
-		for i in range(discoveries.size()):
-			draw_string(font, panel.position + Vector2(16, 58 + i * 24), "• " + discoveries[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ACCENT)
