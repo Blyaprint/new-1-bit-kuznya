@@ -506,7 +506,7 @@ func _execute_production() -> void:
 	var required := ["Железо", "Уголь", "Молот", "Горн"]
 	for title in required:
 		if not by_title.has(title):
-			execution_message = "Для подковы не хватает карты «%s»." % title
+			execution_message = "Для рецепта «%s» не хватает карты «%s»." % [selected_recipe, title]
 			return
 	# Typed sockets model the actual workshop process.
 	var required_links := [
