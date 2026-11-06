@@ -20,7 +20,7 @@ Prototype project for Godot 4.6.
 - Drag an item from the trader's side to your inventory to buy it.
 - Trader sells 2 iron for 1 coin and 5 coal for 1 coin.
 - A replacement hammer costs 3 coins; a replacement furnace costs 4 coins.
-- The trader buys materials back at lower prices: 1 coin per 4 iron or 10 coal. Finished goods and tools also have low resale values.
+- The trader buys materials back at lower prices: 1 coin per 4 iron or 10 coal; 1 horseshoe sells for 2 coins, 5 nails for 1 coin, 2 brackets for 1 coin, and a used tool for 1 coin. The trader can later resell acquired goods at a markup.
 - Prices are prototype balance values and will be tuned during playtesting.
 
 ## Saving
@@ -28,7 +28,7 @@ Prototype project for Godot 4.6.
 - Purchases, sales, production and discoveries are saved automatically.
 - Open the trader and use **ЗАКРЫТЬ** to return to the workshop.
 - Save data includes money, inventory quantities, tool durability, trader stock, selected recipe, board layouts, links, discoveries and the next card ID.
-- Existing save files retain their saved money; a fresh game starts with 5 coins.
+- Existing pre-trader saves keep their workshop and inventory but migrate once to the new 5-coin starting balance.
 
 ## Research
 
