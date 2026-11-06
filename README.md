@@ -60,3 +60,13 @@ Open this folder in Godot 4.6 and run the project (F6/F5). The main scene is `sc
 - Research discovery currently contains one guided example, not a general material/operation simulation.
 - Input/output ports are represented visually by link endpoints; typed port compatibility rules are a later step.
 - Research discoveries are journaled, but full blueprint save/load and the remaining four craft tasks are not implemented yet.
+
+
+## Visual readability pass
+
+- The board now uses a restrained forge-workshop palette with a subtle grid and clearer separation between header, work area, status and hand.
+- Card categories have distinct color bands and silhouettes: blue-grey materials, ochre tools, rust operations, sage blanks/objects and brass finished products.
+- Board nodes visibly distinguish input (green) and output (amber) ports; directed links have arrows and a legend.
+- The two workspace modes now have clear subtitles describing their different purpose and resource rules.
+- Cards show whether they are in the hand or placed as a node, and the hand has a clearer inventory label.
+- These are drawn vector placeholders for readability, not final production art.
