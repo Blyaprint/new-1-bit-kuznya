@@ -34,6 +34,7 @@ var drag_from_hand := false
 var drag_offset := Vector2.ZERO
 var drag_position := Vector2.ZERO
 var connecting_from_id := -1
+var connecting_from_port := -1
 var action_button_held := false
 var execution_message := "Производство: собери схему и нажми «Выполнить»."
 var mouse_position := Vector2.ZERO
@@ -46,8 +47,8 @@ func _ready() -> void:
 	_add_card("Железо", "МАТЕРИАЛ")
 	_add_card("Уголь", "МАТЕРИАЛ")
 	_add_card("Молот", "ИНСТРУМЕНТ")
-	_add_card("Нагрев", "ОПЕРАЦИЯ")
-	_add_card("Заготовка", "ОБЪЕКТ")
+	_add_card("Горн", "ОПЕРАЦИЯ")
+	_add_card("Ковка", "ОПЕРАЦИЯ")
 	queue_redraw()
 
 
@@ -151,7 +152,8 @@ func _gui_input(event: InputEvent) -> void:
 			var source := _port_at(mouse_position, true)
 			if not source.is_empty():
 				connecting_from_id = int(source.id)
-				execution_message = "Выход выбран: %s. Потяни линию к зелёному входу другой карты." % str(source.title)
+				connecting_from_port = int(source.port_index)
+				execution_message = "Выход «%s» выбран. Соедини его с подходящим входом." % str(source.port_label)
 				accept_event()
 				queue_redraw()
 			else:
@@ -162,12 +164,13 @@ func _gui_input(event: InputEvent) -> void:
 			if connecting_from_id != -1:
 				var target := _port_at(mouse_position, false)
 				if not target.is_empty() and int(target.id) != connecting_from_id:
-					_add_directed_link(connecting_from_id, int(target.id))
+					_add_directed_link(connecting_from_id, connecting_from_port, int(target.id), int(target.port_index))
 				elif not target.is_empty():
 					execution_message = "Нельзя соединить карту саму с собой."
 				else:
 					execution_message = "Не попал во вход. Отпусти кнопку на зелёном ВХОДЕ слева."
 				connecting_from_id = -1
+				connecting_from_port = -1
 				accept_event()
 				queue_redraw()
 
@@ -211,20 +214,19 @@ func _execute_production() -> void:
 		if not by_title.has(title):
 			execution_message = "Для подковы не хватает карты «%s»." % title
 			return
-	# Horseshoe recipe is a directed process, not just any connected cluster:
-	# coal fuels heating; iron is heated; the heated blank is forged with the hammer.
+	# Typed sockets model the actual workshop process.
 	var required_links := [
-		"%d:%d" % [int(by_title["Уголь"].id), int(by_title["Нагрев"].id)],
-		"%d:%d" % [int(by_title["Железо"].id), int(by_title["Нагрев"].id)],
-		"%d:%d" % [int(by_title["Нагрев"].id), int(by_title["Заготовка"].id)],
-		"%d:%d" % [int(by_title["Молот"].id), int(by_title["Заготовка"].id)]
+		"%d:0:%d:0" % [int(by_title["Уголь"].id), int(by_title["Горн"].id)],
+		"%d:0:%d:1" % [int(by_title["Железо"].id), int(by_title["Горн"].id)],
+		"%d:0:%d:0" % [int(by_title["Горн"].id), int(by_title["Ковка"].id)],
+		"%d:0:%d:1" % [int(by_title["Молот"].id), int(by_title["Ковка"].id)]
 	]
 	var missing_steps: Array[String] = []
 	var step_names := [
-		"Уголь → Нагрев (топливо)",
-		"Железо → Нагрев (нагрев металла)",
-		"Нагрев → Заготовка (передача нагретой заготовки)",
-		"Молот → Заготовка (ковка)"
+		"Уголь: Топливо → Горн: Топливо",
+		"Железо: Заготовка → Горн: Заготовка",
+		"Горн: Нагретый металл → Ковка: Нагретый металл",
+		"Молот: Удар → Ковка: Удар"
 	]
 	for i in range(required_links.size()):
 		if not production_links.has(required_links[i]):
@@ -233,11 +235,11 @@ func _execute_production() -> void:
 		execution_message = "Подкова не готова. Не хватает этапов: %s." % "; ".join(missing_steps)
 		return
 
-	var blank_position: Vector2 = Vector2(by_title["Заготовка"].production_position)
+	var blank_position: Vector2 = Vector2(by_title["Ковка"].production_position)
 	var consumed_ids := [
 		int(by_title["Железо"].id),
 		int(by_title["Уголь"].id),
-		int(by_title["Заготовка"].id)
+		int(by_title["Горн"].id), int(by_title["Ковка"].id)
 	]
 	for card in cards.duplicate():
 		if consumed_ids.has(int(card.id)):
@@ -286,10 +288,10 @@ func _is_one_connected_network(board_cards: Array[Dictionary], graph_links: Arra
 		adjacency[int(card.id)] = []
 	for link in graph_links:
 		var parts := link.split(":")
-		if parts.size() != 2:
+		if parts.size() != 4:
 			continue
 		var from_id := int(parts[0])
-		var to_id := int(parts[1])
+		var to_id := int(parts[2])
 		if adjacency.has(from_id) and adjacency.has(to_id):
 			adjacency[from_id].append(to_id)
 			adjacency[to_id].append(from_id)
@@ -323,9 +325,37 @@ func _finish_card_drag(release_position: Vector2) -> void:
 	drag_card_id = -1
 
 
-func _port_position(card: Dictionary, is_output: bool) -> Vector2:
+func _input_ports(card: Dictionary) -> Array[String]:
+	match str(card.title):
+		"Горн":
+			return ["Топливо", "Заготовка"]
+		"Ковка":
+			return ["Нагретый металл", "Удар"]
+		_:
+			return []
+
+
+func _output_ports(card: Dictionary) -> Array[String]:
+	match str(card.title):
+		"Уголь":
+			return ["Топливо"]
+		"Железо":
+			return ["Заготовка"]
+		"Молот":
+			return ["Удар"]
+		"Горн":
+			return ["Нагретый металл"]
+		"Ковка":
+			return ["Подкова"]
+		_:
+			return []
+
+
+func _port_position(card: Dictionary, is_output: bool, port_index: int) -> Vector2:
 	var center := Vector2(card[_position_key()])
-	return center + Vector2(CARD_SIZE.x * 0.5 if is_output else -CARD_SIZE.x * 0.5, 0.0)
+	var ports := _output_ports(card) if is_output else _input_ports(card)
+	var y_offset := (float(port_index) - float(ports.size() - 1) * 0.5) * 38.0
+	return center + Vector2(CARD_SIZE.x * 0.5 if is_output else -CARD_SIZE.x * 0.5, y_offset)
 
 
 func _port_at(point: Vector2, is_output: bool) -> Dictionary:
@@ -334,8 +364,10 @@ func _port_at(point: Vector2, is_output: bool) -> Dictionary:
 	for card in board_cards:
 		if int(card.id) == drag_card_id:
 			continue
-		if point.distance_to(_port_position(card, is_output)) <= 16.0:
-			return card
+		var ports := _output_ports(card) if is_output else _input_ports(card)
+		for i in range(ports.size()):
+			if point.distance_to(_port_position(card, is_output, i)) <= 16.0:
+				return {"id": card.id, "title": card.title, "port_index": i, "port_label": ports[i]}
 	return {}
 
 
@@ -410,17 +442,24 @@ func _card_by_id(card_id: int) -> Dictionary:
 	return {}
 
 
-func _add_directed_link(from_id: int, to_id: int) -> void:
+func _add_directed_link(from_id: int, from_port: int, to_id: int, to_port: int) -> void:
 	if from_id == to_id:
 		return
-	var key := "%d:%d" % [from_id, to_id]
+	var from_card := _card_by_id(from_id)
+	var to_card := _card_by_id(to_id)
+	if from_card.is_empty() or to_card.is_empty():
+		return
+	var output_name := _output_ports(from_card)[from_port]
+	var input_name := _input_ports(to_card)[to_port]
+	if output_name != input_name:
+		execution_message = "Несовместимые точки: «%s» не подходит к «%s»." % [output_name, input_name]
+		return
+	var key := "%d:%d:%d:%d" % [from_id, from_port, to_id, to_port]
 	var current := _active_links()
 	if not current.has(key):
 		current.append(key)
 		_set_active_links(current)
-		var from_card := _card_by_id(from_id)
-		var to_card := _card_by_id(to_id)
-		execution_message = "Предварительная реакция: %s → %s. Проверь схему экспериментом." % [str(from_card.title), str(to_card.title)]
+		execution_message = "Совместимость подтверждена: %s → %s." % [output_name, input_name]
 
 
 func _remove_links_for_card(graph_links: Array[String], card_id: int) -> void:
@@ -435,7 +474,7 @@ func _filter_links_for_ids(graph_links: Array[String], ids: Array) -> Array[Stri
 	var kept: Array[String] = []
 	for link in graph_links:
 		var parts := link.split(":")
-		if parts.size() == 2 and not ids.has(int(parts[0])) and not ids.has(int(parts[1])):
+		if parts.size() == 4 and not ids.has(int(parts[0])) and not ids.has(int(parts[2])):
 			kept.append(link)
 	return kept
 
@@ -477,7 +516,7 @@ func _draw() -> void:
 	if connecting_from_id != -1:
 		var source := _card_by_id(connecting_from_id)
 		if not source.is_empty():
-			draw_line(_port_position(source, true), mouse_position, ACCENT, 4.0, true)
+			draw_line(_port_position(source, true, connecting_from_port), mouse_position, ACCENT, 4.0, true)
 			draw_circle(mouse_position, 7.0, ACCENT)
 	if journal_open:
 		_draw_journal()
@@ -522,16 +561,16 @@ func _draw_header_button(rect: Rect2, label: String, active: bool) -> void:
 func _draw_links() -> void:
 	for link in _active_links():
 		var parts := link.split(":")
-		if parts.size() != 2:
+		if parts.size() != 4:
 			continue
 		var a := _card_by_id(int(parts[0]))
-		var b := _card_by_id(int(parts[1]))
+		var b := _card_by_id(int(parts[2]))
 		if a.is_empty() or b.is_empty():
 			continue
 		if str(a[_place_key()]) != "board" or str(b[_place_key()]) != "board":
 			continue
-		var from_edge := _port_position(a, true)
-		var to_edge := _port_position(b, false)
+		var from_edge := _port_position(a, true, int(parts[1]))
+		var to_edge := _port_position(b, false, int(parts[3]))
 		var direction := (to_edge - from_edge).normalized()
 		if direction == Vector2.ZERO:
 			continue
@@ -578,11 +617,17 @@ func _draw_card(card: Dictionary, top_left: Vector2, on_board := false) -> void:
 	draw_line(top_left + Vector2(10, 135), top_left + Vector2(CARD_SIZE.x - 10, 135), Color("#a99a7d"), 1.0)
 	draw_string(font, top_left + Vector2(8, 153), "УЗЕЛ СХЕМЫ" if on_board else "В ИНВЕНТАРЕ", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 8, Color("#675b49"))
 	if on_board:
-		# Explicit, color-coded connection ports make direction readable.
-		draw_circle(Vector2(top_left.x, top_left.y + CARD_SIZE.y * 0.5), 6.0, Color("#82b8a0"))
-		draw_circle(Vector2(top_left.x + CARD_SIZE.x, top_left.y + CARD_SIZE.y * 0.5), 6.0, ACCENT)
-		draw_string(font, top_left + Vector2(8, 76), "ВХОД", HORIZONTAL_ALIGNMENT_LEFT, 34, 8, Color("#34483f"))
-		draw_string(font, top_left + Vector2(CARD_SIZE.x - 48, 76), "ВЫХОД", HORIZONTAL_ALIGNMENT_RIGHT, 40, 8, Color("#594126"))
+		# Each card exposes named sockets specific to its role.
+		var inputs := _input_ports(card)
+		var outputs := _output_ports(card)
+		for i in range(inputs.size()):
+			var p := _port_position(card, false, i)
+			draw_circle(p, 6.0, Color("#82b8a0"))
+			draw_string(font, Vector2(top_left.x + 7, p.y - top_left.y - 9), inputs[i], HORIZONTAL_ALIGNMENT_LEFT, 58, 8, Color("#34483f"))
+		for i in range(outputs.size()):
+			var p := _port_position(card, true, i)
+			draw_circle(p, 6.0, ACCENT)
+			draw_string(font, Vector2(top_left.x + CARD_SIZE.x - 66, p.y - top_left.y - 9), outputs[i], HORIZONTAL_ALIGNMENT_RIGHT, 58, 8, Color("#594126"))
 
 
 func _category_color(category: String) -> Color:
