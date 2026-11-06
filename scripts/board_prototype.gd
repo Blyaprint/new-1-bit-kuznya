@@ -1,19 +1,24 @@
 extends Control
 
-const CARD_SIZE := Vector2(116, 148)
+const CARD_SIZE := Vector2(140, 164)
 const HAND_HEIGHT := 178.0
 const HEADER_HEIGHT := 64.0
 const STATUS_HEIGHT := 54.0
 const BOARD_MARGIN := 28.0
 
-const BG := Color("#171b20")
-const BOARD_BG := Color("#202830")
-const CARD_BG := Color("#d9c9a7")
-const CARD_BORDER := Color("#f0e2c3")
+const BG := Color("#171713")
+const BOARD_BG := Color("#242923")
+const CARD_BG := Color("#e5d8bd")
+const CARD_BORDER := Color("#f5e9d2")
 const INK := Color("#29251f")
-const MUTED := Color("#a9b1b9")
-const ACCENT := Color("#d59b54")
-const LINK_COLOR := Color("#e1b36f")
+const MUTED := Color("#b5b7a8")
+const ACCENT := Color("#e2a653")
+const LINK_COLOR := Color("#f0bd70")
+const MATERIAL_COLOR := Color("#6e9aaf")
+const TOOL_COLOR := Color("#c58b52")
+const OPERATION_COLOR := Color("#d47b55")
+const OBJECT_COLOR := Color("#8a9b72")
+const PRODUCT_COLOR := Color("#d2b45d")
 
 # Card definitions are shared; each mode keeps its own placement and graph.
 var cards: Array[Dictionary] = []
@@ -402,39 +407,64 @@ func _filter_links_for_ids(graph_links: Array[String], ids: Array) -> Array[Stri
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), BG)
-	draw_rect(Rect2(0, 0, size.x, HEADER_HEIGHT), Color("#111519"))
-	draw_string(font, Vector2(28, 39), "КУЗНЯ  /  ИНЖЕНЕРНОЕ ПОЛЕ", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, CARD_BORDER)
+	_draw_workshop_background()
+	draw_rect(Rect2(0, 0, size.x, HEADER_HEIGHT), Color("#11140f"))
+	draw_line(Vector2(0, HEADER_HEIGHT), Vector2(size.x, HEADER_HEIGHT), Color("#55452f"), 2.0)
+	draw_string(font, Vector2(28, 29), "КУЗНЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, CARD_BORDER)
+	draw_string(font, Vector2(28, 49), "ИНЖЕНЕРНАЯ МАСТЕРСКАЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
 	_draw_header_button(_production_button_rect(), "ПРОИЗВОДСТВО", mode == "production")
 	_draw_header_button(_research_button_rect(), "ИССЛЕДОВАНИЕ", mode == "research")
 	_draw_header_button(_journal_button_rect(), "ЖУРНАЛ", journal_open)
-	_draw_header_button(_action_button_rect(), "ВЫПОЛНИТЬ" if mode == "production" else "ЭКСПЕРИМЕНТ", true)
+	_draw_header_button(_action_button_rect(), "ВЫПОЛНИТЬ" if mode == "production" else "ИСПЫТАТЬ", true)
 
 	var board := _board_rect()
 	draw_rect(board, BOARD_BG)
-	draw_rect(board, Color("#35414b"), false, 1.0)
-	var mode_title := "ПРОИЗВОДСТВО · направляй результат от входа к операции и выходу" if mode == "production" else "ИССЛЕДОВАНИЕ · проверяй новые сочетания без расхода материалов"
-	draw_string(font, Vector2(board.position.x + 18, board.position.y + 25), mode_title, HORIZONTAL_ALIGNMENT_LEFT, size.x - 360, 12, MUTED)
-
+	draw_rect(board, Color("#65705c"), false, 2.0)
+	var mode_title := "ПРОИЗВОДСТВО" if mode == "production" else "ИССЛЕДОВАНИЕ"
+	var mode_subtitle := "СОБИРАЙ РАБОЧУЮ ТЕХНОЛОГИЮ · МАТЕРИАЛЫ РАСХОДУЮТСЯ" if mode == "production" else "ПРОВЕРЯЙ ГИПОТЕЗЫ · ЭКСПЕРИМЕНТЫ БЕСПЛАТНЫ"
+	draw_string(font, Vector2(board.position.x + 18, board.position.y + 24), mode_title, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, CARD_BORDER)
+	draw_string(font, Vector2(board.position.x + 18, board.position.y + 43), mode_subtitle, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
+	_draw_graph_legend()
 	_draw_links()
 	for card in _board_cards():
 		if int(card.id) != drag_card_id:
-			_draw_card(card, Vector2(card[_position_key()]) - CARD_SIZE * 0.5)
+			_draw_card(card, Vector2(card[_position_key()]) - CARD_SIZE * 0.5, true)
 
-	draw_rect(Rect2(0.0, size.y - HAND_HEIGHT - STATUS_HEIGHT, size.x, STATUS_HEIGHT), Color("#151a1f"))
-	draw_string(font, Vector2(28, size.y - HAND_HEIGHT - 27), execution_message, HORIZONTAL_ALIGNMENT_LEFT, size.x - 56, 11, ACCENT)
+	draw_rect(Rect2(0.0, size.y - HAND_HEIGHT - STATUS_HEIGHT, size.x, STATUS_HEIGHT), Color("#1d211b"))
+	draw_line(Vector2(0, size.y - HAND_HEIGHT - STATUS_HEIGHT), Vector2(size.x, size.y - HAND_HEIGHT - STATUS_HEIGHT), Color("#675638"), 1.0)
+	draw_circle(Vector2(27, size.y - HAND_HEIGHT - 27), 5.0, ACCENT)
+	draw_string(font, Vector2(42, size.y - HAND_HEIGHT - 23), execution_message, HORIZONTAL_ALIGNMENT_LEFT, size.x - 64, 11, CARD_BORDER)
 	_draw_hand()
 	if drag_card_id != -1:
 		var dragged := _card_by_id(drag_card_id)
 		if not dragged.is_empty():
-			_draw_card(dragged, drag_position)
+			_draw_card(dragged, drag_position, str(dragged[_place_key()]) == "board")
 	if connecting_from_id != -1:
 		var source := _card_by_id(connecting_from_id)
 		if not source.is_empty():
-			draw_line(Vector2(source[_position_key()]), mouse_position, ACCENT, 3.0, true)
-			draw_circle(mouse_position, 5.0, ACCENT)
+			draw_line(Vector2(source[_position_key()]), mouse_position, ACCENT, 4.0, true)
+			draw_circle(mouse_position, 7.0, ACCENT)
 	if journal_open:
 		_draw_journal()
-	draw_string(font, Vector2(28, size.y - 12), "ЛКМ — переместить  ·  ПКМ от карты к карте — направленная связь  ·  нижняя зона — вернуть в руку", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, MUTED)
+	draw_string(font, Vector2(28, size.y - 9), "ПЕРЕТАЩИ КАРТУ НА ПОЛЕ  ·  ПКМ: ПОТЯНИ ОТ ВЫХОДА КО ВХОДУ  ·  ВНИЗУ: РУКА", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
+
+
+func _draw_workshop_background() -> void:
+	for x in range(0, int(size.x), 48):
+		for y in range(int(HEADER_HEIGHT), int(size.y - HAND_HEIGHT - STATUS_HEIGHT), 48):
+			draw_circle(Vector2(x + 24, y + 24), 1.0, Color("#394238"))
+
+
+func _draw_graph_legend() -> void:
+	var x := size.x - 420.0
+	var y := HEADER_HEIGHT + 20.0
+	draw_circle(Vector2(x, y), 5.0, ACCENT)
+	draw_string(font, Vector2(x + 10, y + 4), "ВЫХОД", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
+	draw_circle(Vector2(x + 92, y), 5.0, Color("#82b8a0"))
+	draw_string(font, Vector2(x + 102, y + 4), "ВХОД", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
+	draw_line(Vector2(x + 166, y), Vector2(x + 194, y), LINK_COLOR, 2.0)
+	draw_colored_polygon(PackedVector2Array([Vector2(x + 194, y), Vector2(x + 186, y - 4), Vector2(x + 186, y + 4)]), LINK_COLOR)
+	draw_string(font, Vector2(x + 202, y + 4), "НАПРАВЛЕНИЕ", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
 
 
 func _draw_header_button(rect: Rect2, label: String, active: bool) -> void:
@@ -479,23 +509,111 @@ func _card_edge_point(center: Vector2, direction: Vector2) -> Vector2:
 
 
 func _draw_hand() -> void:
-	draw_rect(_hand_rect(), Color("#111519"))
-	draw_line(Vector2(0, size.y - HAND_HEIGHT), Vector2(size.x, size.y - HAND_HEIGHT), Color("#3b4650"), 1.0)
-	draw_string(font, Vector2(28, size.y - HAND_HEIGHT + 22), "ИНВЕНТАРЬ / РУКА  ·  %d карт" % _hand_cards().size(), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, MUTED)
+	var hand_area := _hand_rect()
+	draw_rect(hand_area, Color("#11140f"))
+	draw_rect(Rect2(0, hand_area.position.y, size.x, 3.0), Color("#8b7044"))
+	draw_string(font, Vector2(28, size.y - HAND_HEIGHT + 22), "РУКА / ИНВЕНТАРЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, CARD_BORDER)
+	draw_string(font, Vector2(28, size.y - HAND_HEIGHT + 39), "%d КАРТ · ПЕРЕТАЩИ НА РАБОЧЕЕ ПОЛЕ" % _hand_cards().size(), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
 	var hand := _hand_cards()
 	for i in range(hand.size()):
 		if int(hand[i].id) == drag_card_id:
 			continue
-		_draw_card(hand[i], _hand_card_rect(i, hand.size()).position)
+		_draw_card(hand[i], _hand_card_rect(i, hand.size()).position, false)
 
 
-func _draw_card(card: Dictionary, top_left: Vector2) -> void:
+func _draw_card(card: Dictionary, top_left: Vector2, on_board := false) -> void:
 	var rect := Rect2(top_left, CARD_SIZE)
+	var role_color := _category_color(str(card.category))
+	# Drop shadow and paper body.
+	draw_rect(Rect2(top_left + Vector2(4, 5), CARD_SIZE), Color("#090b08"))
 	draw_rect(rect, CARD_BG)
-	draw_rect(rect, CARD_BORDER, false, 2.0)
-	draw_rect(Rect2(top_left + Vector2(8, 8), CARD_SIZE - Vector2(16, 34)), Color("#c8b58e"), false, 1.0)
-	draw_string(font, top_left + Vector2(12, 27), str(card.title), HORIZONTAL_ALIGNMENT_LEFT, CARD_SIZE.x - 24, 15, INK)
-	draw_string(font, top_left + Vector2(12, CARD_SIZE.y - 14), str(card.category), HORIZONTAL_ALIGNMENT_LEFT, CARD_SIZE.x - 24, 9, Color("#675b49"))
+	draw_rect(rect, Color("#302b21"), false, 2.0)
+	draw_rect(Rect2(top_left, Vector2(CARD_SIZE.x, 34)), role_color)
+	draw_string(font, top_left + Vector2(10, 22), _category_label(str(card.category)), HORIZONTAL_ALIGNMENT_LEFT, CARD_SIZE.x - 20, 9, Color("#171914"))
+	_draw_card_emblem(str(card.category), top_left + Vector2(CARD_SIZE.x * 0.5, 83), role_color)
+	draw_string(font, top_left + Vector2(8, 125), str(card.title), HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 14, INK)
+	draw_line(top_left + Vector2(10, 135), top_left + Vector2(CARD_SIZE.x - 10, 135), Color("#a99a7d"), 1.0)
+	draw_string(font, top_left + Vector2(8, 153), "УЗЕЛ СХЕМЫ" if on_board else "В ИНВЕНТАРЕ", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 8, Color("#675b49"))
+	if on_board:
+		# Explicit, color-coded connection ports make direction readable.
+		draw_circle(Vector2(top_left.x, top_left.y + CARD_SIZE.y * 0.5), 6.0, Color("#82b8a0"))
+		draw_circle(Vector2(top_left.x + CARD_SIZE.x, top_left.y + CARD_SIZE.y * 0.5), 6.0, ACCENT)
+		draw_string(font, top_left + Vector2(3, 76), "ВХ", HORIZONTAL_ALIGNMENT_LEFT, 20, 7, Color("#34483f"))
+		draw_string(font, top_left + Vector2(CARD_SIZE.x - 22, 76), "ВЫХ", HORIZONTAL_ALIGNMENT_RIGHT, 20, 7, Color("#594126"))
+
+
+func _category_color(category: String) -> Color:
+	match category:
+		"МАТЕРИАЛ":
+			return MATERIAL_COLOR
+		"ИНСТРУМЕНТ":
+			return TOOL_COLOR
+		"ОПЕРАЦИЯ":
+			return OPERATION_COLOR
+		"ОБЪЕКТ":
+			return OBJECT_COLOR
+		"ИЗДЕЛИЕ":
+			return PRODUCT_COLOR
+		_:
+			return Color("#888888")
+
+
+func _category_label(category: String) -> String:
+	match category:
+		"МАТЕРИАЛ":
+			return "МАТЕРИАЛ"
+		"ИНСТРУМЕНТ":
+			return "ИНСТРУМЕНТ"
+		"ОПЕРАЦИЯ":
+			return "ОПЕРАЦИЯ"
+		"ОБЪЕКТ":
+			return "ЗАГОТОВКА"
+		"ИЗДЕЛИЕ":
+			return "ГОТОВОЕ ИЗДЕЛИЕ"
+		_:
+			return category
+
+
+func _draw_card_emblem(category: String, center: Vector2, color: Color) -> void:
+	match category:
+		"МАТЕРИАЛ":
+			draw_circle(center, 21.0, Color("#b8c8c1"))
+			draw_circle(center, 16.0, color)
+			draw_line(center + Vector2(-10, 5), center + Vector2(7, -8), Color("#d9e0d5"), 3.0)
+			draw_line(center + Vector2(-5, 12), center + Vector2(12, -1), Color("#d9e0d5"), 2.0)
+		"ИНСТРУМЕНТ":
+			draw_circle(center, 22.0, Color("#d5c19d"))
+			draw_rect(Rect2(center + Vector2(-5, -16), Vector2(10, 32)), color)
+			draw_rect(Rect2(center + Vector2(-15, -17), Vector2(30, 9)), Color("#584633"))
+			draw_line(center + Vector2(-10, 12), center + Vector2(10, -12), Color("#f2dfb8"), 3.0)
+		"ОПЕРАЦИЯ":
+			draw_circle(center, 22.0, Color("#e3c5a2"))
+			draw_circle(center, 15.0, color)
+			for i in range(8):
+				var angle := TAU * float(i) / 8.0
+				draw_line(center + Vector2(cos(angle), sin(angle)) * 15.0, center + Vector2(cos(angle), sin(angle)) * 21.0, color, 4.0)
+			draw_circle(center, 5.0, Color("#f4e6c9"))
+		"ОБЪЕКТ":
+			draw_colored_polygon(PackedVector2Array([center + Vector2(-22, -14), center + Vector2(16, -18), center + Vector2(23, 12), center + Vector2(-14, 19)]), color)
+			draw_line(center + Vector2(-14, 4), center + Vector2(13, -5), Color("#e5e0c9"), 3.0)
+		"ИЗДЕЛИЕ":
+			draw_circle(center, 23.0, Color("#e6d4a6"))
+			draw_circle(center, 17.0, color)
+			draw_arc(center, 12.0, 0.2, TAU - 0.2, 28, Color("#fff0bd"), 4.0)
+
+
+func _draw_journal() -> void:
+	var panel := Rect2(size.x - 330.0, 72.0, 300.0, 220.0)
+	draw_rect(panel, Color("#171b15"))
+	draw_rect(panel, Color("#d0a15e"), false, 2.0)
+	draw_rect(Rect2(panel.position, Vector2(panel.size.x, 38)), Color("#4a3a27"))
+	draw_string(font, panel.position + Vector2(16, 25), "ЖУРНАЛ ОТКРЫТИЙ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, CARD_BORDER)
+	if discoveries.is_empty():
+		draw_string(font, panel.position + Vector2(16, 66), "Пока нет открытий.", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, MUTED)
+	else:
+		for i in range(discoveries.size()):
+			draw_circle(panel.position + Vector2(22, 59 + i * 24), 4.0, OPERATION_COLOR)
+			draw_string(font, panel.position + Vector2(36, 63 + i * 24), discoveries[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, CARD_BORDER)
 
 
 func _draw_journal() -> void:
