@@ -48,7 +48,6 @@ func _ready() -> void:
 	_add_card("Уголь", "МАТЕРИАЛ")
 	_add_card("Молот", "ИНСТРУМЕНТ")
 	_add_card("Горн", "ОПЕРАЦИЯ")
-	_add_card("Наковальня", "ИНСТРУМЕНТ")
 	queue_redraw()
 
 
