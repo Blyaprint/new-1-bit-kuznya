@@ -19,6 +19,10 @@ const TOOL_COLOR := Color("#c58b52")
 const OPERATION_COLOR := Color("#d47b55")
 const OBJECT_COLOR := Color("#8a9b72")
 const PRODUCT_COLOR := Color("#d2b45d")
+const SAVE_PATH := "user://kuznya_save.json"
+const IRON_BUY_PRICE := 12
+const COAL_BUY_PRICE := 5
+const HORSESHOE_SELL_PRICE := 30
 
 # Card definitions are shared; each mode keeps its own placement and graph.
 var cards: Array[Dictionary] = []
@@ -29,6 +33,8 @@ var next_card_id := 1
 
 var mode := "production"
 var journal_open := false
+var market_open := false
+var money := 100
 var drag_card_id := -1
 var drag_from_hand := false
 var drag_offset := Vector2.ZERO
@@ -44,18 +50,20 @@ var font: Font
 func _ready() -> void:
 	font = ThemeDB.fallback_font
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	_add_card("Железо", "МАТЕРИАЛ")
-	_add_card("Уголь", "МАТЕРИАЛ")
+	_add_card("Железо", "МАТЕРИАЛ", 3)
+	_add_card("Уголь", "МАТЕРИАЛ", 3)
 	_add_card("Молот", "ИНСТРУМЕНТ")
 	_add_card("Горн", "ОПЕРАЦИЯ")
+	_load_game()
 	queue_redraw()
 
 
-func _add_card(title: String, category: String) -> void:
+func _add_card(title: String, category: String, quantity: int = 1) -> void:
 	cards.append({
 		"id": next_card_id,
 		"title": title,
 		"category": category,
+		"quantity": quantity,
 		"production_place": "hand",
 		"production_position": Vector2.ZERO,
 		"research_place": "hand",
@@ -97,6 +105,17 @@ func _gui_input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		mouse_position = event.position
 		if event.pressed:
+			if _market_button_rect().has_point(mouse_position):
+				market_open = not market_open
+				journal_open = false
+				accept_event()
+				queue_redraw()
+				return
+			if market_open:
+				_handle_market_click(mouse_position)
+				accept_event()
+				queue_redraw()
+				return
 			if _production_button_rect().has_point(mouse_position):
 				_switch_mode("production")
 				accept_event()
@@ -183,6 +202,10 @@ func _switch_mode(next_mode: String) -> void:
 	queue_redraw()
 
 
+func _market_button_rect() -> Rect2:
+	return Rect2(Vector2(size.x - 590.0, 12.0), Vector2(112.0, 40.0))
+
+
 func _production_button_rect() -> Rect2:
 	return Rect2(Vector2(size.x - 470.0, 12.0), Vector2(112.0, 40.0))
 
@@ -197,6 +220,116 @@ func _journal_button_rect() -> Rect2:
 
 func _action_button_rect() -> Rect2:
 	return Rect2(Vector2(size.x - 128.0, 12.0), Vector2(100.0, 40.0))
+
+
+func _market_panel_rect() -> Rect2:
+	return Rect2(size.x * 0.5 - 210.0, size.y * 0.5 - 170.0, 420.0, 340.0)
+
+
+func _market_action_rect(index: int) -> Rect2:
+	return Rect2(_market_panel_rect().position + Vector2(24.0, 86.0 + index * 48.0), Vector2(372.0, 38.0))
+
+
+func _handle_market_click(point: Vector2) -> void:
+	if _market_action_rect(0).has_point(point):
+		_buy_resource("Железо", IRON_BUY_PRICE)
+	elif _market_action_rect(1).has_point(point):
+		_buy_resource("Уголь", COAL_BUY_PRICE)
+	elif _market_action_rect(2).has_point(point):
+		_sell_horseshoes()
+	elif _market_action_rect(3).has_point(point):
+		_save_game()
+	elif _market_action_rect(4).has_point(point):
+		_load_game()
+
+
+func _buy_resource(title: String, price: int) -> void:
+	if money < price:
+		execution_message = "Не хватает денег. Нужно: %d монет." % price
+		return
+	money -= price
+	var found := false
+	for card in cards:
+		if str(card.title) == title:
+			card.quantity = int(card.get("quantity", 1)) + 1
+			found = true
+			break
+	if not found:
+		_add_card(title, "МАТЕРИАЛ")
+	execution_message = "Куплено: %s. Остаток: %d монет." % [title.to_lower(), money]
+	_save_game()
+
+
+func _sell_horseshoes() -> void:
+	var sold := 0
+	for card in cards.duplicate():
+		if str(card.title) == "Подкова":
+			sold += int(card.get("quantity", 1))
+			cards.erase(card)
+	if sold == 0:
+		execution_message = "Пока нечего продавать. Сначала изготовь подковы."
+		return
+	money += sold * HORSESHOE_SELL_PRICE
+	execution_message = "Продано подков: %d. Выручка: %d монет." % [sold, sold * HORSESHOE_SELL_PRICE]
+	_save_game()
+
+
+func _save_game() -> void:
+	var saved_cards: Array[Dictionary] = []
+	for card in cards:
+		var data: Dictionary = card.duplicate()
+		data["production_position"] = [Vector2(card.production_position).x, Vector2(card.production_position).y]
+		data["research_position"] = [Vector2(card.research_position).x, Vector2(card.research_position).y]
+		saved_cards.append(data)
+	var payload := {
+		"version": 1,
+		"money": money,
+		"cards": saved_cards,
+		"production_links": production_links,
+		"research_links": research_links,
+		"discoveries": discoveries,
+		"next_card_id": next_card_id
+	}
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if file == null:
+		execution_message = "Не удалось сохранить игру."
+		return
+	file.store_string(JSON.stringify(payload))
+	execution_message = "Игра сохранена."
+
+
+func _load_game() -> void:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return
+	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if file == null:
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if typeof(parsed) != TYPE_DICTIONARY or int(parsed.get("version", 0)) != 1:
+		return
+	money = maxi(0, int(parsed.get("money", 100)))
+	cards.clear()
+	for raw_card in parsed.get("cards", []):
+		if typeof(raw_card) != TYPE_DICTIONARY:
+			continue
+		var card: Dictionary = raw_card.duplicate()
+		var pp: Array = card.get("production_position", [0.0, 0.0])
+		var rp: Array = card.get("research_position", [0.0, 0.0])
+		card["production_position"] = Vector2(float(pp[0]), float(pp[1]))
+		card["research_position"] = Vector2(float(rp[0]), float(rp[1]))
+		card["quantity"] = maxi(1, int(card.get("quantity", 1)))
+		cards.append(card)
+	production_links.clear()
+	for link in parsed.get("production_links", []):
+		production_links.append(str(link))
+	research_links.clear()
+	for link in parsed.get("research_links", []):
+		research_links.append(str(link))
+	discoveries.clear()
+	for discovery in parsed.get("discoveries", []):
+		discoveries.append(str(discovery))
+	next_card_id = maxi(1, int(parsed.get("next_card_id", cards.size() + 1)))
+	execution_message = "Сохранение загружено."
 
 
 func _execute_production() -> void:
@@ -232,11 +365,16 @@ func _execute_production() -> void:
 		execution_message = "Подкова не готова. Не хватает этапов: %s." % "; ".join(missing_steps)
 		return
 
+	if int(by_title["Железо"].get("quantity", 1)) < 1 or int(by_title["Уголь"].get("quantity", 1)) < 1:
+		execution_message = "Закончились материалы. Купи железо и уголь у торговца."
+		return
 	var blank_position: Vector2 = Vector2(by_title["Железо"].production_position)
-	var consumed_ids := [
-		int(by_title["Железо"].id),
-		int(by_title["Уголь"].id)
-	]
+	var consumed_ids: Array[int] = []
+	for material_title in ["Железо", "Уголь"]:
+		var material: Dictionary = by_title[material_title]
+		material.quantity = int(material.get("quantity", 1)) - 1
+		if int(material.quantity) <= 0:
+			consumed_ids.append(int(material.id))
 	for card in cards.duplicate():
 		if consumed_ids.has(int(card.id)):
 			cards.erase(card)
@@ -246,7 +384,8 @@ func _execute_production() -> void:
 	var result_card: Dictionary = cards.back()
 	result_card.production_place = "board"
 	result_card.production_position = blank_position
-	execution_message = "Подкова изготовлена. Железо и уголь израсходованы; горн и молот сохранены."
+	execution_message = "Подкова изготовлена. Материалы списаны со склада."
+	_save_game()
 
 
 func _run_experiment() -> void:
@@ -270,6 +409,7 @@ func _run_experiment() -> void:
 		discoveries.append("Ковка")
 		_add_card("Ковка", "ОПЕРАЦИЯ")
 		execution_message = "Открытие: «Ковка». Новая операция добавлена в инвентарь."
+		_save_game()
 	elif has_iron and has_heat and has_hammer:
 		execution_message = "Эксперимент повторён. Ковка уже известна; попробуй другую комбинацию."
 	else:
@@ -506,6 +646,8 @@ func _draw() -> void:
 	draw_line(Vector2(0, HEADER_HEIGHT), Vector2(size.x, HEADER_HEIGHT), Color("#55452f"), 2.0)
 	draw_string(font, Vector2(28, 29), "КУЗНЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, CARD_BORDER)
 	draw_string(font, Vector2(28, 49), "ИНЖЕНЕРНАЯ МАСТЕРСКАЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
+	draw_string(font, Vector2(260, 36), "МОНЕТЫ: %d" % money, HORIZONTAL_ALIGNMENT_LEFT, 150, 14, ACCENT)
+	_draw_header_button(_market_button_rect(), "ТОРГОВЕЦ", market_open)
 	_draw_header_button(_production_button_rect(), "ПРОИЗВОДСТВО", mode == "production")
 	_draw_header_button(_research_button_rect(), "ИССЛЕДОВАНИЕ", mode == "research")
 	_draw_header_button(_journal_button_rect(), "ЖУРНАЛ", journal_open)
@@ -540,6 +682,8 @@ func _draw() -> void:
 			draw_circle(mouse_position, 7.0, ACCENT)
 	if journal_open:
 		_draw_journal()
+	if market_open:
+		_draw_market()
 	draw_string(font, Vector2(28, size.y - 9), "ПЕРЕТАЩИ КАРТУ НА ПОЛЕ  ·  ПКМ: ПОТЯНИ ОТ ВЫХОДА КО ВХОДУ  ·  ВНИЗУ: РУКА", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
 
 
@@ -615,7 +759,10 @@ func _draw_hand() -> void:
 	draw_rect(hand_area, Color("#11140f"))
 	draw_rect(Rect2(0, hand_area.position.y, size.x, 3.0), Color("#8b7044"))
 	draw_string(font, Vector2(28, size.y - HAND_HEIGHT + 22), "РУКА / ИНВЕНТАРЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, CARD_BORDER)
-	draw_string(font, Vector2(28, size.y - HAND_HEIGHT + 39), "%d КАРТ · ПЕРЕТАЩИ НА РАБОЧЕЕ ПОЛЕ" % _hand_cards().size(), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
+	var total_items := 0
+	for card in _hand_cards():
+		total_items += int(card.get("quantity", 1))
+	draw_string(font, Vector2(28, size.y - HAND_HEIGHT + 39), "%d ПРЕДМЕТОВ · ПЕРЕТАЩИ НА РАБОЧЕЕ ПОЛЕ" % total_items, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
 	var hand := _hand_cards()
 	for i in range(hand.size()):
 		if int(hand[i].id) == drag_card_id:
@@ -634,6 +781,8 @@ func _draw_card(card: Dictionary, top_left: Vector2, on_board := false) -> void:
 	draw_string(font, top_left + Vector2(10, 22), _category_label(str(card.category)), HORIZONTAL_ALIGNMENT_LEFT, CARD_SIZE.x - 20, 9, Color("#171914"))
 	_draw_card_emblem(str(card.category), top_left + Vector2(CARD_SIZE.x * 0.5, 76), role_color)
 	draw_string(font, top_left + Vector2(8, 125), str(card.title), HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 14, INK)
+	if int(card.get("quantity", 1)) > 1:
+		draw_string(font, top_left + Vector2(CARD_SIZE.x - 32, 48), "×%d" % int(card.quantity), HORIZONTAL_ALIGNMENT_CENTER, 26, 12, INK)
 	draw_line(top_left + Vector2(10, 135), top_left + Vector2(CARD_SIZE.x - 10, 135), Color("#a99a7d"), 1.0)
 	draw_string(font, top_left + Vector2(8, 153), "УЗЕЛ СХЕМЫ" if on_board else "В ИНВЕНТАРЕ", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 8, Color("#675b49"))
 	if on_board:
@@ -710,6 +859,27 @@ func _draw_card_emblem(category: String, center: Vector2, color: Color) -> void:
 			draw_circle(center, 23.0, Color("#e6d4a6"))
 			draw_circle(center, 17.0, color)
 			draw_arc(center, 12.0, 0.2, TAU - 0.2, 28, Color("#fff0bd"), 4.0)
+
+
+func _draw_market() -> void:
+	var panel := _market_panel_rect()
+	draw_rect(panel, Color("#171b15"))
+	draw_rect(panel, Color("#d0a15e"), false, 2.0)
+	draw_rect(Rect2(panel.position, Vector2(panel.size.x, 48.0)), Color("#4a3a27"))
+	draw_string(font, panel.position + Vector2(20, 30), "ТОРГОВЕЦ", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, CARD_BORDER)
+	var labels := [
+		"Купить железо — %d монет" % IRON_BUY_PRICE,
+		"Купить уголь — %d монет" % COAL_BUY_PRICE,
+		"Продать все подковы — %d за штуку" % HORSESHOE_SELL_PRICE,
+		"Сохранить игру",
+		"Загрузить сохранение"
+	]
+	for i in range(labels.size()):
+		var rect := _market_action_rect(i)
+		draw_rect(rect, Color("#394237"))
+		draw_rect(rect, Color("#b89a68"), false, 1.0)
+		draw_string(font, rect.position + Vector2(12, 24), labels[i], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24, 11, CARD_BORDER)
+	draw_string(font, panel.position + Vector2(24, panel.size.y - 14), "Деньги: %d монет" % money, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, ACCENT)
 
 
 func _draw_journal() -> void:
