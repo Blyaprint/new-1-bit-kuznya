@@ -450,9 +450,19 @@ func _draw() -> void:
 
 
 func _draw_workshop_background() -> void:
-	for x in range(0, int(size.x), 48):
-		for y in range(int(HEADER_HEIGHT), int(size.y - HAND_HEIGHT - STATUS_HEIGHT), 48):
-			draw_circle(Vector2(x + 24, y + 24), 1.0, Color("#394238"))
+	# Keep the workshop texture cheap: a few straight lines instead of
+	# hundreds of individual circles on every drag redraw.
+	var area := _board_rect()
+	var grid_color := Color("#303a32")
+	var spacing := 64.0
+	var x := area.position.x
+	while x < area.end.x:
+		draw_line(Vector2(x, area.position.y), Vector2(x, area.end.y), grid_color, 1.0)
+		x += spacing
+	var y := area.position.y
+	while y < area.end.y:
+		draw_line(Vector2(area.position.x, y), Vector2(area.end.x, y), grid_color, 1.0)
+		y += spacing
 
 
 func _draw_graph_legend() -> void:
