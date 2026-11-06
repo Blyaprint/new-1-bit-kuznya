@@ -643,12 +643,12 @@ func _draw_card(card: Dictionary, top_left: Vector2, on_board := false) -> void:
 		for i in range(inputs.size()):
 			var p := _port_position(card, false, i)
 			draw_circle(p, 6.0, Color("#82b8a0"))
-			var label_pos := Vector2(top_left.x + 8, p.y - top_left.y + 3)
+			var label_pos := Vector2(top_left.x + 8, p.y + 3)
 			draw_string(font, label_pos, str(inputs[i].label), HORIZONTAL_ALIGNMENT_LEFT, 46, 7, Color("#34483f"))
 		for i in range(outputs.size()):
 			var p := _port_position(card, true, i)
 			draw_circle(p, 6.0, ACCENT)
-			var label_pos := Vector2(top_left.x + CARD_SIZE.x - 54, p.y - top_left.y + 3)
+			var label_pos := Vector2(top_left.x + CARD_SIZE.x - 54, p.y + 3)
 			draw_string(font, label_pos, str(outputs[i].label), HORIZONTAL_ALIGNMENT_RIGHT, 46, 7, Color("#594126"))
 
 
