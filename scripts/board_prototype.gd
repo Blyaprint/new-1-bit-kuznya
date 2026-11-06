@@ -211,11 +211,26 @@ func _execute_production() -> void:
 		if not by_title.has(title):
 			execution_message = "Для подковы не хватает карты «%s»." % title
 			return
-	if not _is_one_connected_network(board_cards, production_links):
-		execution_message = "Схема должна быть одной непрерывной сетью. Соедини все элементы."
-		return
-	if production_links.is_empty():
-		execution_message = "Добавь направленные связи между входами и операциями."
+	# Horseshoe recipe is a directed process, not just any connected cluster:
+	# coal fuels heating; iron is heated; the heated blank is forged with the hammer.
+	var required_links := [
+		"%d:%d" % [int(by_title["Уголь"].id), int(by_title["Нагрев"].id)],
+		"%d:%d" % [int(by_title["Железо"].id), int(by_title["Нагрев"].id)],
+		"%d:%d" % [int(by_title["Нагрев"].id), int(by_title["Заготовка"].id)],
+		"%d:%d" % [int(by_title["Молот"].id), int(by_title["Заготовка"].id)]
+	]
+	var missing_steps: Array[String] = []
+	var step_names := [
+		"Уголь → Нагрев (топливо)",
+		"Железо → Нагрев (нагрев металла)",
+		"Нагрев → Заготовка (передача нагретой заготовки)",
+		"Молот → Заготовка (ковка)"
+	]
+	for i in range(required_links.size()):
+		if not production_links.has(required_links[i]):
+			missing_steps.append(step_names[i])
+	if not missing_steps.is_empty():
+		execution_message = "Подкова не готова. Не хватает этапов: %s." % "; ".join(missing_steps)
 		return
 
 	var blank_position: Vector2 = Vector2(by_title["Заготовка"].production_position)
