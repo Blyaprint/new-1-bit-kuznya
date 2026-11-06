@@ -1121,8 +1121,9 @@ func _draw_market() -> void:
 		var item_color := _category_color(str(item.category))
 		draw_rect(Rect2(slot.position + Vector2(7, 7), Vector2(48, 48)), Color("#45483b"))
 		_draw_card_emblem(str(item.category), slot.position + Vector2(31, 29), item_color)
+		draw_string(font, slot.position + Vector2(3, 59), str(item.title), HORIZONTAL_ALIGNMENT_CENTER, 56, 8, CARD_BORDER)
 		if int(item.quantity) > 1:
-			draw_string(font, slot.position + Vector2(34, 58), "×%d" % int(item.quantity), HORIZONTAL_ALIGNMENT_RIGHT, 25, 10, CARD_BORDER)
+			draw_string(font, slot.position + Vector2(34, 14), "×%d" % int(item.quantity), HORIZONTAL_ALIGNMENT_RIGHT, 25, 9, CARD_BORDER)
 		if slot.has_point(mouse_position) and not is_dragged:
 			hovered_title = str(item.title)
 			hovered_category = str(item.category)
@@ -1142,7 +1143,8 @@ func _draw_market() -> void:
 			category = "ИЗДЕЛИЕ"
 		draw_rect(Rect2(slot.position + Vector2(7, 7), Vector2(48, 48)), Color("#45483b"))
 		_draw_card_emblem(category, slot.position + Vector2(31, 29), _category_color(category))
-		draw_string(font, slot.position + Vector2(4, 58), str(trader_stock.get(title, 0)), HORIZONTAL_ALIGNMENT_RIGHT, 52, 9, CARD_BORDER)
+		draw_string(font, slot.position + Vector2(3, 59), title, HORIZONTAL_ALIGNMENT_CENTER, 56, 8, CARD_BORDER)
+		draw_string(font, slot.position + Vector2(34, 14), str(trader_stock.get(title, 0)), HORIZONTAL_ALIGNMENT_RIGHT, 25, 9, CARD_BORDER)
 		if slot.has_point(mouse_position) and not is_dragged:
 			hovered_title = title
 			hovered_category = category
