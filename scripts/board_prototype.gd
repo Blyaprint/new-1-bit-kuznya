@@ -1040,6 +1040,24 @@ func _draw_card_emblem(category: String, center: Vector2, color: Color) -> void:
 			draw_arc(center, 12.0, 0.2, TAU - 0.2, 28, Color("#fff0bd"), 4.0)
 
 
+func _trade_sale_hint(title: String, quantity: int) -> String:
+	match title:
+		"Железо":
+			return "Продажа: %d мон. за 4 шт." % int(floor(float(quantity) / 4.0))
+		"Уголь":
+			return "Продажа: %d мон. за 10 шт." % int(floor(float(quantity) / 10.0))
+		"Подкова":
+			return "Продажа: %d мон." % (quantity * 2)
+		"Гвозди":
+			return "Продажа: %d мон. за 5 шт." % int(floor(float(quantity) / 5.0))
+		"Скоба":
+			return "Продажа: %d мон. за 2 шт." % int(floor(float(quantity) / 2.0))
+		"Молот", "Горн":
+			return "Продажа: 1 монета"
+		_:
+			return "Торговец не покупает"
+
+
 func _draw_market() -> void:
 	var player_panel := _trade_player_panel()
 	var merchant_panel := _trade_merchant_panel()
@@ -1059,7 +1077,7 @@ func _draw_market() -> void:
 		draw_rect(row, Color("#394237"))
 		draw_rect(row, Color("#b89a68"), false, 1.0)
 		draw_string(font, row.position + Vector2(10, 14), str(item.title), HORIZONTAL_ALIGNMENT_LEFT, 180, 11, CARD_BORDER)
-		draw_string(font, row.position + Vector2(10, 28), "Количество: %d" % int(item.quantity), HORIZONTAL_ALIGNMENT_LEFT, 180, 8, MUTED)
+		draw_string(font, row.position + Vector2(10, 28), "×%d · %s" % [int(item.quantity), _trade_sale_hint(str(item.title), int(item.quantity))], HORIZONTAL_ALIGNMENT_LEFT, 230, 8, MUTED)
 		draw_string(font, row.position + Vector2(row.size.x - 70, 23), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_RIGHT, 60, 8, ACCENT)
 	var merchant_titles := _merchant_trade_titles()
 	for i in range(merchant_titles.size()):
