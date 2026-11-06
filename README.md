@@ -2,47 +2,55 @@
 
 Prototype project for Godot 4.6.
 
-## Playable core in progress
+## Playable workshop loop
 
-The current prototype combines an engineering board with the first economy loop.
-
-### Workshop and production
-- The production and research modes keep separate board layouts and directed links.
+- Production and research keep separate board layouts and directed links.
 - Drag cards from the hand onto the board; drag them back to return them.
 - Right-drag from an amber output port to a compatible green input port.
-- The first production recipe makes a horseshoe using iron, coal, the furnace and the hammer.
-- Each successful horseshoe consumes one iron and one coal. The furnace and hammer remain available.
-- Material cards show their current stack quantity.
+- Choose a recipe in the top bar: **Подкова**, **Гвозди** or **Скоба**.
+- The current recipes share the first iron-working process: coal fuels the furnace, the furnace heats iron, and the hammer applies force.
+- Each production action consumes one iron and one coal. The hammer and furnace each lose one durability point.
+- Tools have 6 durability points. A red vertical wear bar grows upward as durability is lost; a broken tool disappears and must be replaced.
 
-### Economy and trader
-- New game starts with 100 coins, 3 iron and 3 coal.
-- Open **ТОРГОВЕЦ** in the header.
-- Buy iron for 12 coins or coal for 5 coins.
-- Sell all produced horseshoes for 30 coins each.
-- The current prices are prototype balance values and will be tuned during playtesting.
+## Trader and economy
 
-### Saving
-- Open the trader panel and choose **Сохранить игру** to save the current workshop.
-- The game attempts to load the latest save automatically on startup.
-- The save contains money, cards and quantities, both board layouts, both sets of links, research discoveries and the next card ID.
-- **Загрузить сохранение** restores the latest save.
+- A fresh game starts with **5 coins**, 3 iron, 3 coal, one hammer and one furnace.
+- Open **ТОРГОВЕЦ** for a separate two-column trade window.
+- Drag an item from your inventory to the trader's side to sell it.
+- Drag an item from the trader's side to your inventory to buy it.
+- Trader sells 2 iron for 1 coin and 5 coal for 1 coin.
+- A replacement hammer costs 3 coins; a replacement furnace costs 4 coins.
+- The trader buys materials back at lower prices: 1 coin per 4 iron or 10 coal. Finished goods and tools also have low resale values.
+- Prices are prototype balance values and will be tuned during playtesting.
 
-### Research
+## Saving
+
+- Purchases, sales, production and discoveries are saved automatically.
+- Open the trader and use **ЗАКРЫТЬ** to return to the workshop.
+- Save data includes money, inventory quantities, tool durability, trader stock, selected recipe, board layouts, links, discoveries and the next card ID.
+- Existing save files retain their saved money; a fresh game starts with 5 coins.
+
+## Research
+
 - Experiments are immediate and do not consume materials.
 - The first guided discovery with iron, furnace and hammer unlocks the forging operation and records it in the journal.
 
 ## Controls
-- **Left mouse button:** move/place/return cards; switch modes; open the journal and trader.
+
+- **Left mouse button:** move/place/return cards; switch modes; choose recipe; open the journal and trader.
 - **Right mouse button:** drag from an output to a compatible input to create a connection.
-- **Выполнить:** run the production recipe.
-- **Испытать:** run a research experiment.
-- **Торговец:** buy materials, sell all horseshoes, save or load.
+- **ВЫПОЛНИТЬ:** run the selected production recipe.
+- **ИСПЫТАТЬ:** run a research experiment.
+- **ТОРГОВЕЦ:** open the two-sided trade window.
 
 ## Run
+
 Open this folder in Godot 4.6 and run the project (F6/F5). The main scene is `scenes/board_prototype.tscn`.
 
 ## Current limits
+
 - This is an early playable economy slice, not a complete game.
-- There is one product and fixed prototype prices; no orders, customers, dynamic market or upgrades yet.
-- Save/load is a simple versioned JSON save in the Godot user data directory.
-- The prototype has not yet been runtime-tested in Godot as part of this update.
+- Recipes currently share the same iron-working graph; distinct process chains will be added later.
+- There are no orders, customers, dynamic prices or workshop upgrades yet.
+- Save/load is a versioned JSON save in the Godot user data directory.
+- Runtime validation is still required in Godot after this update.
