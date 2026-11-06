@@ -74,9 +74,13 @@ func _gui_input(event: InputEvent) -> void:
 				drag_card_id = int(hit.id)
 				drag_from_hand = hit.place == "hand"
 				if drag_from_hand:
-					drag_offset = CARD_SIZE * 0.5
+					var hand := _hand_cards()
+					for i in range(hand.size()):
+						if int(hand[i].id) == drag_card_id:
+							drag_offset = mouse_position - _hand_card_rect(i, hand.size()).position
+							break
 				else:
-					drag_offset = mouse_position - Vector2(hit.position)
+					drag_offset = mouse_position - (Vector2(hit.position) - CARD_SIZE * 0.5)
 				drag_position = mouse_position - drag_offset
 				accept_event()
 		else:
@@ -116,7 +120,7 @@ func _finish_card_drag(release_position: Vector2) -> void:
 			card.position = Vector2.ZERO
 	elif _board_rect().has_point(release_position):
 		card.place = "board"
-		card.position = _clamp_to_board(release_position - drag_offset)
+		card.position = _clamp_to_board(release_position - drag_offset + CARD_SIZE * 0.5)
 	drag_card_id = -1
 
 
