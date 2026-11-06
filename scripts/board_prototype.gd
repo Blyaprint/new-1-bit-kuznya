@@ -128,32 +128,85 @@ func _execute_button_rect() -> Rect2:
 
 func _execute_scheme() -> void:
 	var board_cards: Array[Dictionary] = []
+	var by_title: Dictionary = {}
 	var degrees: Dictionary = {}
+	var adjacency: Dictionary = {}
 	for card in cards:
 		if card.place == "board":
 			board_cards.append(card)
+			by_title[str(card.title)] = card
 			degrees[int(card.id)] = 0
+			adjacency[int(card.id)] = []
 
 	if board_cards.size() < 2:
 		execution_message = "Нужно разместить на поле хотя бы две карты."
 		return
+
+	var required := ["Железо", "Уголь", "Молот", "Нагрев", "Заготовка"]
+	for title in required:
+		if not by_title.has(title):
+			execution_message = "Рецепт подковы: не хватает карты «%s»." % title
+			return
 
 	var valid_links := 0
 	for link in links:
 		var parts := link.split(":")
 		var a_id := int(parts[0])
 		var b_id := int(parts[1])
-		if degrees.has(a_id) and degrees.has(b_id):
+		if adjacency.has(a_id) and adjacency.has(b_id):
 			degrees[a_id] = int(degrees[a_id]) + 1
 			degrees[b_id] = int(degrees[b_id]) + 1
+			adjacency[a_id].append(b_id)
+			adjacency[b_id].append(a_id)
 			valid_links += 1
 
 	for card_id in degrees:
 		if int(degrees[card_id]) == 0:
-			execution_message = "Проверь связи: у каждой карты на поле должна быть хотя бы одна связь."
+			execution_message = "В схеме есть карта без связи. Соедини все пять элементов."
 			return
 
-	execution_message = "СХЕМА ПРИНЯТА · %d карт, %d связей. Это проверка структуры — изготовление предмета добавим отдельно." % [board_cards.size(), valid_links]
+	# All recipe cards must belong to one connected graph.
+	var visited: Dictionary = {}
+	var queue: Array[int] = [int(board_cards[0].id)]
+	visited[int(board_cards[0].id)] = true
+	while not queue.is_empty():
+		var current: int = queue.pop_front()
+		for neighbor in adjacency[current]:
+			if not visited.has(int(neighbor)):
+				visited[int(neighbor)] = true
+				queue.append(int(neighbor))
+	if visited.size() != board_cards.size():
+		execution_message = "Схема разорвана: соедини все элементы в одну сеть."
+		return
+
+	var blank_position: Vector2 = Vector2(by_title["Заготовка"].position)
+	var consumed_ids := [
+		int(by_title["Железо"].id),
+		int(by_title["Уголь"].id),
+		int(by_title["Заготовка"].id)
+	]
+	var kept_cards: Array[Dictionary] = []
+	for card in cards:
+		if not consumed_ids.has(int(card.id)):
+			kept_cards.append(card)
+	cards = kept_cards
+
+	var kept_links: Array[String] = []
+	for link in links:
+		var parts := link.split(":")
+		if not consumed_ids.has(int(parts[0])) and not consumed_ids.has(int(parts[1])):
+			kept_links.append(link)
+	links = kept_links
+
+	cards.append({
+		"id": next_card_id,
+		"title": "Подкова",
+		"category": "ИЗДЕЛИЕ",
+		"place": "board",
+		"position": blank_position
+	})
+	next_card_id += 1
+	execution_message = "ПОДКОВА ИЗГОТОВЛЕНА · железо, уголь и заготовка израсходованы; молот и нагрев сохранены."
 
 
 func _finish_card_drag(release_position: Vector2) -> void:
