@@ -371,23 +371,32 @@ func _buy_from_trader(title: String) -> void:
 	money -= price
 	trader_stock[title] = int(trader_stock.get(title, 0)) - amount
 	var existing := _find_inventory_card(title)
-	if existing.is_empty():
+	if title in ["Молот", "Горн"]:
+		_add_card(title, category)
+		var new_tool: Dictionary = cards.back()
+		new_tool["durability"] = TOOL_MAX_DURABILITY
+		new_tool["max_durability"] = TOOL_MAX_DURABILITY
+	elif existing.is_empty():
 		_add_card(title, category, amount)
-		existing = cards.back()
 	else:
 		existing.quantity = int(existing.get("quantity", 1)) + amount
-	if title in ["Молот", "Горн"]:
-		existing["durability"] = TOOL_MAX_DURABILITY
-		existing["max_durability"] = TOOL_MAX_DURABILITY
 	execution_message = "Куплено: %s ×%d за %d монету(ы)." % [title, amount, price]
 	_save_game()
 
 
 func _sell_to_trader(title: String) -> void:
-	var item := _find_inventory_card(title)
-	if item.is_empty():
+	var items_to_sell: Array[Dictionary] = []
+	var quantity := 0
+	for card in cards:
+		if str(card.title) != title:
+			continue
+		if str(card.get("production_place", "hand")) == "board" or str(card.get("research_place", "hand")) == "board":
+			execution_message = "Сними предмет с рабочего поля перед продажей."
+			return
+		items_to_sell.append(card)
+		quantity += int(card.get("quantity", 1))
+	if items_to_sell.is_empty():
 		return
-	var quantity := int(item.get("quantity", 1))
 	var payout := 0
 	match title:
 		"Железо":
@@ -401,21 +410,18 @@ func _sell_to_trader(title: String) -> void:
 		"Скоба":
 			payout = int(floor(float(quantity) / 2.0))
 		"Молот", "Горн":
-			payout = 1
+			payout = quantity
 		_:
 			payout = 0
 	if payout <= 0:
 		execution_message = "Торговец не покупает этот предмет или количество слишком мало."
 		return
-	if str(item.get("production_place", "hand")) == "board" or str(item.get("research_place", "hand")) == "board":
-		execution_message = "Сними предмет с рабочего поля перед продажей."
-		return
-	cards.erase(item)
+	for item in items_to_sell:
+		cards.erase(item)
 	trader_stock[title] = int(trader_stock.get(title, 0)) + quantity
 	money += payout
-	execution_message = "Продано торговцу: %s. Получено %d монет." % [title, payout]
+	execution_message = "Продано торговцу: %s ×%d. Получено %d монет." % [title, quantity, payout]
 	_save_game()
-
 
 func _save_game() -> void:
 	var saved_cards: Array[Dictionary] = []
