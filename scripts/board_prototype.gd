@@ -287,7 +287,7 @@ func _trade_merchant_panel() -> Rect2:
 
 
 func _trade_row_rect(panel: Rect2, index: int) -> Rect2:
-	return Rect2(panel.position + Vector2(16.0, 66.0 + index * 48.0), Vector2(panel.size.x - 32.0, 40.0))
+	return Rect2(panel.position + Vector2(16.0, 62.0 + index * 42.0), Vector2(panel.size.x - 32.0, 36.0))
 
 
 func _player_trade_items() -> Array[Dictionary]:
@@ -343,10 +343,14 @@ func _buy_from_trader(title: String) -> void:
 		"Горн":
 			price = FURNACE_BUY_PRICE
 			category = "ОПЕРАЦИЯ"
+	if int(trader_stock.get(title, 0)) < amount:
+		execution_message = "У торговца закончился этот товар."
+		return
 	if money < price:
 		execution_message = "Не хватает монет для покупки."
 		return
 	money -= price
+	trader_stock[title] = int(trader_stock.get(title, 0)) - amount
 	var existing := _find_inventory_card(title)
 	if existing.is_empty():
 		_add_card(title, category, amount)
@@ -368,9 +372,9 @@ func _sell_to_trader(title: String) -> void:
 	var payout := 0
 	match title:
 		"Железо":
-			payout = quantity / 4
+			payout = int(floor(float(quantity) / 4.0))
 		"Уголь":
-			payout = quantity / 10
+			payout = int(floor(float(quantity) / 10.0))
 		"Подкова":
 			payout = quantity * 2
 		"Гвозди":
@@ -388,6 +392,7 @@ func _sell_to_trader(title: String) -> void:
 		execution_message = "Сними инструмент с рабочего поля перед продажей."
 		return
 	cards.erase(item)
+	trader_stock[title] = int(trader_stock.get(title, 0)) + quantity
 	money += payout
 	execution_message = "Продано торговцу: %s. Получено %d монет." % [title, payout]
 	_save_game()
@@ -1034,9 +1039,9 @@ func _draw_market() -> void:
 		var row := _trade_row_rect(player_panel, i)
 		draw_rect(row, Color("#394237"))
 		draw_rect(row, Color("#b89a68"), false, 1.0)
-		draw_string(font, row.position + Vector2(10, 16), str(item.title), HORIZONTAL_ALIGNMENT_LEFT, 180, 11, CARD_BORDER)
-		draw_string(font, row.position + Vector2(10, 31), "Количество: %d" % int(item.quantity), HORIZONTAL_ALIGNMENT_LEFT, 180, 9, MUTED)
-		draw_string(font, row.position + Vector2(row.size.x - 70, 25), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_RIGHT, 60, 8, ACCENT)
+		draw_string(font, row.position + Vector2(10, 14), str(item.title), HORIZONTAL_ALIGNMENT_LEFT, 180, 11, CARD_BORDER)
+		draw_string(font, row.position + Vector2(10, 28), "Количество: %d" % int(item.quantity), HORIZONTAL_ALIGNMENT_LEFT, 180, 8, MUTED)
+		draw_string(font, row.position + Vector2(row.size.x - 70, 23), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_RIGHT, 60, 8, ACCENT)
 	var merchant_titles := ["Железо", "Уголь", "Молот", "Горн"]
 	for i in range(merchant_titles.size()):
 		var title: String = merchant_titles[i]
@@ -1053,9 +1058,9 @@ func _draw_market() -> void:
 				details = "%d монеты" % TOOL_BUY_PRICE
 			"Горн":
 				details = "%d монеты" % FURNACE_BUY_PRICE
-		draw_string(font, row.position + Vector2(10, 16), title, HORIZONTAL_ALIGNMENT_LEFT, 180, 11, CARD_BORDER)
-		draw_string(font, row.position + Vector2(10, 31), details, HORIZONTAL_ALIGNMENT_LEFT, 180, 9, MUTED)
-		draw_string(font, row.position + Vector2(row.size.x - 70, 25), "КУПИТЬ", HORIZONTAL_ALIGNMENT_RIGHT, 60, 8, ACCENT)
+		draw_string(font, row.position + Vector2(10, 14), title, HORIZONTAL_ALIGNMENT_LEFT, 180, 11, CARD_BORDER)
+		draw_string(font, row.position + Vector2(10, 28), "%s · В наличии: %d" % [details, int(trader_stock.get(title, 0))], HORIZONTAL_ALIGNMENT_LEFT, 210, 8, MUTED)
+		draw_string(font, row.position + Vector2(row.size.x - 70, 23), "КУПИТЬ", HORIZONTAL_ALIGNMENT_RIGHT, 60, 8, ACCENT)
 	draw_string(font, player_panel.position + Vector2(0, 390), "Баланс: %d монет" % money, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ACCENT)
 	draw_string(font, merchant_panel.position + Vector2(0, 390), "Цены скупки низкие — проверь стоимость до обмена", HORIZONTAL_ALIGNMENT_LEFT, 300, 9, MUTED)
 	draw_rect(_trade_close_rect(), Color("#4a3a27"))
