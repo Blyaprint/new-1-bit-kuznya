@@ -349,8 +349,14 @@ func _output_ports(card: Dictionary) -> Array[Dictionary]:
 			return []
 
 
+func _card_center(card: Dictionary) -> Vector2:
+	if int(card.id) == drag_card_id and str(card[_place_key()]) == "board":
+		return drag_position + CARD_SIZE * 0.5
+	return Vector2(card[_position_key()])
+
+
 func _port_position(card: Dictionary, is_output: bool, port_index: int) -> Vector2:
-	var center := Vector2(card[_position_key()])
+	var center := _card_center(card)
 	var ports := _output_ports(card) if is_output else _input_ports(card)
 	var y_offset := (float(port_index) - float(ports.size() - 1) * 0.5) * 38.0
 	return center + Vector2(CARD_SIZE.x * 0.5 if is_output else -CARD_SIZE.x * 0.5, y_offset)
@@ -626,7 +632,7 @@ func _draw_card(card: Dictionary, top_left: Vector2, on_board := false) -> void:
 	draw_rect(rect, Color("#302b21"), false, 2.0)
 	draw_rect(Rect2(top_left, Vector2(CARD_SIZE.x, 34)), role_color)
 	draw_string(font, top_left + Vector2(10, 22), _category_label(str(card.category)), HORIZONTAL_ALIGNMENT_LEFT, CARD_SIZE.x - 20, 9, Color("#171914"))
-	_draw_card_emblem(str(card.category), top_left + Vector2(CARD_SIZE.x * 0.5, 83), role_color)
+	_draw_card_emblem(str(card.category), top_left + Vector2(CARD_SIZE.x * 0.5, 76), role_color)
 	draw_string(font, top_left + Vector2(8, 125), str(card.title), HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 14, INK)
 	draw_line(top_left + Vector2(10, 135), top_left + Vector2(CARD_SIZE.x - 10, 135), Color("#a99a7d"), 1.0)
 	draw_string(font, top_left + Vector2(8, 153), "УЗЕЛ СХЕМЫ" if on_board else "В ИНВЕНТАРЕ", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 8, Color("#675b49"))
@@ -637,14 +643,13 @@ func _draw_card(card: Dictionary, top_left: Vector2, on_board := false) -> void:
 		for i in range(inputs.size()):
 			var p := _port_position(card, false, i)
 			draw_circle(p, 6.0, Color("#82b8a0"))
-			draw_string(font, Vector2(top_left.x + 7, p.y - top_left.y - 9), str(inputs[i].label), HORIZONTAL_ALIGNMENT_LEFT, 58, 8, Color("#34483f"))
+			var label_pos := Vector2(top_left.x + 8, p.y - top_left.y + 3)
+			draw_string(font, label_pos, str(inputs[i].label), HORIZONTAL_ALIGNMENT_LEFT, 46, 7, Color("#34483f"))
 		for i in range(outputs.size()):
 			var p := _port_position(card, true, i)
 			draw_circle(p, 6.0, ACCENT)
-			draw_string(font, Vector2(top_left.x + CARD_SIZE.x - 66, p.y - top_left.y - 9), str(outputs[i].label), HORIZONTAL_ALIGNMENT_RIGHT, 58, 8, Color("#594126"))
-		if str(card.category) == "МАТЕРИАЛ":
-			draw_string(font, top_left + Vector2(8, 47), "СВОЙСТВА", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 8, Color("#46504a"))
-			draw_string(font, top_left + Vector2(8, 59), "Температура · прочность", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 8, Color("#46504a"))
+			var label_pos := Vector2(top_left.x + CARD_SIZE.x - 54, p.y - top_left.y + 3)
+			draw_string(font, label_pos, str(outputs[i].label), HORIZONTAL_ALIGNMENT_RIGHT, 46, 7, Color("#594126"))
 
 
 func _category_color(category: String) -> Color:
