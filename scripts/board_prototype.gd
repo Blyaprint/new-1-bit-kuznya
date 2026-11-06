@@ -40,6 +40,7 @@ var money := 5
 var trader_stock := {"Железо": 99, "Уголь": 99, "Молот": 99, "Горн": 99}
 var trade_drag_source := ""
 var trade_drag_title := ""
+var selected_recipe := "Подкова"
 var drag_card_id := -1
 var drag_from_hand := false
 var drag_offset := Vector2.ZERO
@@ -123,6 +124,11 @@ func _gui_input(event: InputEvent) -> void:
 			if market_open:
 				trade_drag_source = ""
 				trade_drag_title = ""
+				if _trade_close_rect().has_point(mouse_position) or not _trade_window_rect().has_point(mouse_position):
+					market_open = false
+					accept_event()
+					queue_redraw()
+					return
 				if _trade_player_row_at(mouse_position) != "":
 					trade_drag_source = "player"
 					trade_drag_title = _trade_player_row_at(mouse_position)
@@ -139,6 +145,11 @@ func _gui_input(event: InputEvent) -> void:
 			if _research_button_rect().has_point(mouse_position):
 				_switch_mode("research")
 				accept_event()
+				return
+			if _recipe_button_rect().has_point(mouse_position):
+				_cycle_recipe()
+				accept_event()
+				queue_redraw()
 				return
 			if _journal_button_rect().has_point(mouse_position):
 				journal_open = not journal_open
@@ -240,12 +251,31 @@ func _research_button_rect() -> Rect2:
 	return Rect2(Vector2(size.x - 350.0, 12.0), Vector2(112.0, 40.0))
 
 
+func _recipe_button_rect() -> Rect2:
+	return Rect2(Vector2(430.0, 12.0), Vector2(220.0, 40.0))
+
+
+func _cycle_recipe() -> void:
+	var recipes := ["Подкова", "Гвозди", "Скоба"]
+	var index := recipes.find(selected_recipe)
+	selected_recipe = recipes[(index + 1) % recipes.size()]
+	execution_message = "Выбран рецепт: %s." % selected_recipe
+
+
 func _journal_button_rect() -> Rect2:
 	return Rect2(Vector2(size.x - 230.0, 12.0), Vector2(92.0, 40.0))
 
 
 func _action_button_rect() -> Rect2:
 	return Rect2(Vector2(size.x - 128.0, 12.0), Vector2(100.0, 40.0))
+
+
+func _trade_window_rect() -> Rect2:
+	return Rect2(size.x * 0.5 - 362.0, size.y * 0.5 - 247.0, 724.0, 470.0)
+
+
+func _trade_close_rect() -> Rect2:
+	return Rect2(_trade_window_rect().end - Vector2(92.0, 44.0), Vector2(80.0, 30.0))
 
 
 func _trade_player_panel() -> Rect2:
@@ -344,6 +374,10 @@ func _sell_to_trader(title: String) -> void:
 			payout = quantity / 10
 		"Подкова":
 			payout = quantity * 2
+		"Гвозди":
+			payout = int(floor(float(quantity) / 5.0))
+		"Скоба":
+			payout = int(floor(float(quantity) / 2.0))
 		"Молот", "Горн":
 			payout = 1
 		_:
@@ -481,11 +515,17 @@ func _execute_production() -> void:
 	consumed_ids.append_array(broken_tools)
 	production_links = _filter_links_for_ids(production_links, consumed_ids)
 	research_links = _filter_links_for_ids(research_links, consumed_ids)
-	_add_card("Подкова", "ИЗДЕЛИЕ")
+	var product_quantity := 1
+	match selected_recipe:
+		"Гвозди":
+			product_quantity = 5
+		"Скоба":
+			product_quantity = 2
+	_add_card(selected_recipe, "ИЗДЕЛИЕ", product_quantity)
 	var result_card: Dictionary = cards.back()
 	result_card.production_place = "hand"
 	result_card.production_position = Vector2.ZERO
-	execution_message = "Подкова изготовлена. Материалы списаны, износ инструментов увеличен."
+	execution_message = "Изготовлено: %s ×%d. Материалы списаны, инструменты изношены." % [selected_recipe, product_quantity]
 	if not broken_tools.is_empty():
 		execution_message += " Инструмент сломался — купи замену у торговца."
 	_save_game()
@@ -750,6 +790,7 @@ func _draw() -> void:
 	draw_string(font, Vector2(28, 29), "КУЗНЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, CARD_BORDER)
 	draw_string(font, Vector2(28, 49), "ИНЖЕНЕРНАЯ МАСТЕРСКАЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
 	draw_string(font, Vector2(260, 36), "МОНЕТЫ: %d" % money, HORIZONTAL_ALIGNMENT_LEFT, 150, 14, ACCENT)
+	_draw_header_button(_recipe_button_rect(), "РЕЦЕПТ: %s" % selected_recipe.to_upper(), true)
 	_draw_header_button(_market_button_rect(), "ТОРГОВЕЦ", market_open)
 	_draw_header_button(_production_button_rect(), "ПРОИЗВОДСТВО", mode == "production")
 	_draw_header_button(_research_button_rect(), "ИССЛЕДОВАНИЕ", mode == "research")
@@ -977,8 +1018,8 @@ func _draw_market() -> void:
 	var merchant_panel := _trade_merchant_panel()
 	# Darkened backdrop makes the trader a separate modal window.
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.62))
-	draw_rect(Rect2(player_panel.position - Vector2(12, 42), Vector2(merchant_panel.end.x - player_panel.position.x + 24, 470)), Color("#171b15"))
-	draw_rect(Rect2(player_panel.position - Vector2(12, 42), Vector2(merchant_panel.end.x - player_panel.position.x + 24, 470)), Color("#d0a15e"), false, 2.0)
+	draw_rect(_trade_window_rect(), Color("#171b15"))
+	draw_rect(_trade_window_rect(), Color("#d0a15e"), false, 2.0)
 	draw_string(font, player_panel.position + Vector2(0, -14), "ОБМЕН", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, CARD_BORDER)
 	draw_string(font, player_panel.position + Vector2(0, 20), "ТВОЙ ИНВЕНТАРЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, ACCENT)
 	draw_string(font, merchant_panel.position + Vector2(0, 20), "ТОРГОВЕЦ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, ACCENT)
@@ -1014,7 +1055,9 @@ func _draw_market() -> void:
 		draw_string(font, row.position + Vector2(row.size.x - 70, 25), "КУПИТЬ", HORIZONTAL_ALIGNMENT_RIGHT, 60, 8, ACCENT)
 	draw_string(font, player_panel.position + Vector2(0, 390), "Баланс: %d монет" % money, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ACCENT)
 	draw_string(font, merchant_panel.position + Vector2(0, 390), "Цены скупки низкие — проверь стоимость до обмена", HORIZONTAL_ALIGNMENT_LEFT, 300, 9, MUTED)
-	draw_string(font, Vector2(merchant_panel.end.x - 70, player_panel.position.y - 14), "ЗАКРЫТЬ", HORIZONTAL_ALIGNMENT_RIGHT, 70, 10, CARD_BORDER)
+	draw_rect(_trade_close_rect(), Color("#4a3a27"))
+	draw_rect(_trade_close_rect(), Color("#b89a68"), false, 1.0)
+	draw_string(font, _trade_close_rect().position + Vector2(7, 19), "ЗАКРЫТЬ", HORIZONTAL_ALIGNMENT_CENTER, 66, 9, CARD_BORDER)
 
 
 func _draw_journal() -> void:
