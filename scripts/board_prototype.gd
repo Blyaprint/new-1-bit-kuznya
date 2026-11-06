@@ -218,8 +218,8 @@ func _execute_production() -> void:
 	for card in cards.duplicate():
 		if consumed_ids.has(int(card.id)):
 			cards.erase(card)
-	_remove_links_for_ids(production_links, consumed_ids)
-	_remove_links_for_ids(research_links, consumed_ids)
+	production_links = _filter_links_for_ids(production_links, consumed_ids)
+	research_links = _filter_links_for_ids(research_links, consumed_ids)
 	_add_card("Подкова", "ИЗДЕЛИЕ")
 	var result_card: Dictionary = cards.back()
 	result_card.production_place = "board"
@@ -384,19 +384,20 @@ func _add_directed_link(from_id: int, to_id: int) -> void:
 
 
 func _remove_links_for_card(graph_links: Array[String], card_id: int) -> void:
-	_remove_links_for_ids(graph_links, [card_id])
+	var kept := _filter_links_for_ids(graph_links, [card_id])
+	if mode == "production":
+		production_links = kept
+	else:
+		research_links = kept
 
 
-func _remove_links_for_ids(graph_links: Array[String], ids: Array) -> void:
+func _filter_links_for_ids(graph_links: Array[String], ids: Array) -> Array[String]:
 	var kept: Array[String] = []
 	for link in graph_links:
 		var parts := link.split(":")
 		if parts.size() == 2 and not ids.has(int(parts[0])) and not ids.has(int(parts[1])):
 			kept.append(link)
-	if graph_links == production_links:
-		production_links = kept
-	else:
-		research_links = kept
+	return kept
 
 
 func _draw() -> void:
@@ -454,13 +455,27 @@ func _draw_links() -> void:
 			continue
 		if str(a[_place_key()]) != "board" or str(b[_place_key()]) != "board":
 			continue
-		var start := Vector2(a[_position_key()])
-		var finish := Vector2(b[_position_key()])
-		draw_line(start, finish, LINK_COLOR, 3.0, true)
-		var direction := (finish - start).normalized()
+		var from_center := Vector2(a[_position_key()])
+		var to_center := Vector2(b[_position_key()])
+		var direction := (to_center - from_center).normalized()
+		if direction == Vector2.ZERO:
+			continue
+		var from_edge := _card_edge_point(from_center, direction)
+		var to_edge := _card_edge_point(to_center, -direction)
+		draw_line(from_edge, to_edge, LINK_COLOR, 3.0, true)
+		draw_circle(from_edge, 5.0, ACCENT)
+		draw_circle(to_edge, 5.0, Color("#82b8a0"))
 		var side := Vector2(-direction.y, direction.x)
-		var tip := finish - direction * 12.0
+		var tip := to_edge - direction * 3.0
 		draw_colored_polygon(PackedVector2Array([tip, tip - direction * 12.0 + side * 6.0, tip - direction * 12.0 - side * 6.0]), LINK_COLOR)
+
+
+func _card_edge_point(center: Vector2, direction: Vector2) -> Vector2:
+	var half := CARD_SIZE * 0.5
+	var scale_x := half.x / maxf(0.001, absf(direction.x))
+	var scale_y := half.y / maxf(0.001, absf(direction.y))
+	var distance := minf(scale_x, scale_y)
+	return center + direction * distance
 
 
 func _draw_hand() -> void:
