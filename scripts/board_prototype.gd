@@ -298,9 +298,8 @@ func _player_trade_items() -> Array[Dictionary]:
 			grouped[title] = {"title": title, "quantity": 0, "category": str(card.category)}
 		grouped[title].quantity += int(card.get("quantity", 1))
 	var result: Array[Dictionary] = []
-	for title in ["Железо", "Уголь", "Подкова", "Молот", "Горн", "Ковка", "Гвоздь", "Скоба"]:
-		if grouped.has(title):
-			result.append(grouped[title])
+	for title in grouped.keys():
+		result.append(grouped[title])
 	return result
 
 
@@ -404,6 +403,7 @@ func _save_game() -> void:
 	var payload := {
 		"version": 1,
 		"money": money,
+		"selected_recipe": selected_recipe,
 		"trader_stock": trader_stock,
 		"cards": saved_cards,
 		"production_links": production_links,
@@ -428,6 +428,9 @@ func _load_game() -> void:
 	if typeof(parsed) != TYPE_DICTIONARY or int(parsed.get("version", 0)) != 1:
 		return
 	money = maxi(0, int(parsed.get("money", 5)))
+	selected_recipe = str(parsed.get("selected_recipe", "Подкова"))
+	if not ["Подкова", "Гвозди", "Скоба"].has(selected_recipe):
+		selected_recipe = "Подкова"
 	if parsed.has("trader_stock"):
 		trader_stock = parsed.trader_stock
 	cards.clear()
