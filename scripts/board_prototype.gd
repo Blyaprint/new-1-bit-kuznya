@@ -382,8 +382,8 @@ func _execute_production() -> void:
 	research_links = _filter_links_for_ids(research_links, consumed_ids)
 	_add_card("Подкова", "ИЗДЕЛИЕ")
 	var result_card: Dictionary = cards.back()
-	result_card.production_place = "board"
-	result_card.production_position = blank_position
+	result_card.production_place = "hand"
+	result_card.production_position = Vector2.ZERO
 	execution_message = "Подкова изготовлена. Материалы списаны со склада."
 	_save_game()
 
