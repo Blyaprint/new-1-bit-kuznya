@@ -10,11 +10,18 @@ config_version=5
 
 [application]
 
-config/name="То, что остаётся"\nrun/main_scene="res://scenes/board_prototype.tscn"
+config/name="То, что остаётся"
+run/main_scene="res://scenes/board_prototype.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
 
-[display]\n\nwindow/size/viewport_width=1280\nwindow/size/viewport_height=800\nwindow/stretch/mode="canvas_items"\n\n[physics]
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=800
+window/stretch/mode="canvas_items"
+
+[physics]
 
 3d/physics_engine="Jolt Physics"
 
