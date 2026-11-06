@@ -109,6 +109,9 @@ func _gui_input(event: InputEvent) -> void:
 			trade_drag_position = mouse_position
 			accept_event()
 			queue_redraw()
+		elif market_open:
+			accept_event()
+			queue_redraw()
 		elif drag_card_id != -1:
 			drag_position = mouse_position - drag_offset
 			accept_event()
