@@ -20,9 +20,11 @@ const OPERATION_COLOR := Color("#d47b55")
 const OBJECT_COLOR := Color("#8a9b72")
 const PRODUCT_COLOR := Color("#d2b45d")
 const SAVE_PATH := "user://kuznya_save.json"
-const IRON_BUY_PRICE := 12
-const COAL_BUY_PRICE := 5
-const HORSESHOE_SELL_PRICE := 30
+const IRON_PACK_SIZE := 2
+const COAL_PACK_SIZE := 5
+const TOOL_BUY_PRICE := 3
+const FURNACE_BUY_PRICE := 4
+const TOOL_MAX_DURABILITY := 6
 
 # Card definitions are shared; each mode keeps its own placement and graph.
 var cards: Array[Dictionary] = []
@@ -34,7 +36,10 @@ var next_card_id := 1
 var mode := "production"
 var journal_open := false
 var market_open := false
-var money := 100
+var money := 5
+var trader_stock := {"Железо": 99, "Уголь": 99, "Молот": 99, "Горн": 99}
+var trade_drag_source := ""
+var trade_drag_title := ""
 var drag_card_id := -1
 var drag_from_hand := false
 var drag_offset := Vector2.ZERO
@@ -54,6 +59,10 @@ func _ready() -> void:
 	_add_card("Уголь", "МАТЕРИАЛ", 3)
 	_add_card("Молот", "ИНСТРУМЕНТ")
 	_add_card("Горн", "ОПЕРАЦИЯ")
+	for card in cards:
+		if str(card.title) in ["Молот", "Горн"]:
+			card["durability"] = TOOL_MAX_DURABILITY
+			card["max_durability"] = TOOL_MAX_DURABILITY
 	_load_game()
 	queue_redraw()
 
@@ -112,7 +121,14 @@ func _gui_input(event: InputEvent) -> void:
 				queue_redraw()
 				return
 			if market_open:
-				_handle_market_click(mouse_position)
+				trade_drag_source = ""
+				trade_drag_title = ""
+				if _trade_player_row_at(mouse_position) != "":
+					trade_drag_source = "player"
+					trade_drag_title = _trade_player_row_at(mouse_position)
+				elif _trade_merchant_row_at(mouse_position) != "":
+					trade_drag_source = "merchant"
+					trade_drag_title = _trade_merchant_row_at(mouse_position)
 				accept_event()
 				queue_redraw()
 				return
@@ -149,6 +165,16 @@ func _gui_input(event: InputEvent) -> void:
 				drag_position = mouse_position - drag_offset
 				accept_event()
 		else:
+			if market_open:
+				if trade_drag_source == "player" and _trade_merchant_panel().has_point(mouse_position):
+					_sell_to_trader(trade_drag_title)
+				elif trade_drag_source == "merchant" and _trade_player_panel().has_point(mouse_position):
+					_buy_from_trader(trade_drag_title)
+				trade_drag_source = ""
+				trade_drag_title = ""
+				accept_event()
+				queue_redraw()
+				return
 			if action_button_held:
 				if _action_button_rect().has_point(mouse_position):
 					if mode == "production":
@@ -222,56 +248,115 @@ func _action_button_rect() -> Rect2:
 	return Rect2(Vector2(size.x - 128.0, 12.0), Vector2(100.0, 40.0))
 
 
-func _market_panel_rect() -> Rect2:
-	return Rect2(size.x * 0.5 - 210.0, size.y * 0.5 - 170.0, 420.0, 340.0)
+func _trade_player_panel() -> Rect2:
+	return Rect2(size.x * 0.5 - 350.0, size.y * 0.5 - 205.0, 330.0, 410.0)
 
 
-func _market_action_rect(index: int) -> Rect2:
-	return Rect2(_market_panel_rect().position + Vector2(24.0, 86.0 + index * 48.0), Vector2(372.0, 38.0))
+func _trade_merchant_panel() -> Rect2:
+	return Rect2(size.x * 0.5 + 20.0, size.y * 0.5 - 205.0, 330.0, 410.0)
 
 
-func _handle_market_click(point: Vector2) -> void:
-	if _market_action_rect(0).has_point(point):
-		_buy_resource("Железо", IRON_BUY_PRICE)
-	elif _market_action_rect(1).has_point(point):
-		_buy_resource("Уголь", COAL_BUY_PRICE)
-	elif _market_action_rect(2).has_point(point):
-		_sell_horseshoes()
-	elif _market_action_rect(3).has_point(point):
-		_save_game()
-		execution_message = "Игра сохранена."
-	elif _market_action_rect(4).has_point(point):
-		_load_game()
+func _trade_row_rect(panel: Rect2, index: int) -> Rect2:
+	return Rect2(panel.position + Vector2(16.0, 66.0 + index * 48.0), Vector2(panel.size.x - 32.0, 40.0))
 
 
-func _buy_resource(title: String, price: int) -> void:
-	if money < price:
-		execution_message = "Не хватает денег. Нужно: %d монет." % price
-		return
-	money -= price
-	var found := false
+func _player_trade_items() -> Array[Dictionary]:
+	var grouped: Dictionary = {}
+	for card in cards:
+		var title := str(card.title)
+		if not grouped.has(title):
+			grouped[title] = {"title": title, "quantity": 0, "category": str(card.category)}
+		grouped[title].quantity += int(card.get("quantity", 1))
+	var result: Array[Dictionary] = []
+	for title in ["Железо", "Уголь", "Подкова", "Молот", "Горн", "Ковка", "Гвоздь", "Скоба"]:
+		if grouped.has(title):
+			result.append(grouped[title])
+	return result
+
+
+func _trade_player_row_at(point: Vector2) -> String:
+	var items := _player_trade_items()
+	for i in range(items.size()):
+		if _trade_row_rect(_trade_player_panel(), i).has_point(point):
+			return str(items[i].title)
+	return ""
+
+
+func _trade_merchant_row_at(point: Vector2) -> String:
+	var titles := ["Железо", "Уголь", "Молот", "Горн"]
+	for i in range(titles.size()):
+		if _trade_row_rect(_trade_merchant_panel(), i).has_point(point):
+			return titles[i]
+	return ""
+
+
+func _find_inventory_card(title: String) -> Dictionary:
 	for card in cards:
 		if str(card.title) == title:
-			card.quantity = int(card.get("quantity", 1)) + 1
-			found = true
-			break
-	if not found:
-		_add_card(title, "МАТЕРИАЛ")
-	execution_message = "Куплено: %s. Остаток: %d монет." % [title.to_lower(), money]
+			return card
+	return {}
+
+
+func _buy_from_trader(title: String) -> void:
+	var price := 0
+	var amount := 1
+	var category := "МАТЕРИАЛ"
+	match title:
+		"Железо":
+			price = 1
+			amount = IRON_PACK_SIZE
+		"Уголь":
+			price = 1
+			amount = COAL_PACK_SIZE
+		"Молот":
+			price = TOOL_BUY_PRICE
+			category = "ИНСТРУМЕНТ"
+		"Горн":
+			price = FURNACE_BUY_PRICE
+			category = "ОПЕРАЦИЯ"
+	if money < price:
+		execution_message = "Не хватает монет для покупки."
+		return
+	money -= price
+	var existing := _find_inventory_card(title)
+	if existing.is_empty():
+		_add_card(title, category, amount)
+		existing = cards.back()
+	else:
+		existing.quantity = int(existing.get("quantity", 1)) + amount
+	if title in ["Молот", "Горн"]:
+		existing["durability"] = TOOL_MAX_DURABILITY
+		existing["max_durability"] = TOOL_MAX_DURABILITY
+	execution_message = "Куплено: %s ×%d за %d монету(ы)." % [title, amount, price]
 	_save_game()
 
 
-func _sell_horseshoes() -> void:
-	var sold := 0
-	for card in cards.duplicate():
-		if str(card.title) == "Подкова":
-			sold += int(card.get("quantity", 1))
-			cards.erase(card)
-	if sold == 0:
-		execution_message = "Пока нечего продавать. Сначала изготовь подковы."
+func _sell_to_trader(title: String) -> void:
+	var item := _find_inventory_card(title)
+	if item.is_empty():
 		return
-	money += sold * HORSESHOE_SELL_PRICE
-	execution_message = "Продано подков: %d. Выручка: %d монет." % [sold, sold * HORSESHOE_SELL_PRICE]
+	var quantity := int(item.get("quantity", 1))
+	var payout := 0
+	match title:
+		"Железо":
+			payout = quantity / 4
+		"Уголь":
+			payout = quantity / 10
+		"Подкова":
+			payout = quantity * 2
+		"Молот", "Горн":
+			payout = 1
+		_:
+			payout = 0
+	if payout <= 0:
+		execution_message = "Торговец не покупает этот предмет или количество слишком мало."
+		return
+	if title in ["Молот", "Горн"] and str(item.get("production_place", "hand")) == "board":
+		execution_message = "Сними инструмент с рабочего поля перед продажей."
+		return
+	cards.erase(item)
+	money += payout
+	execution_message = "Продано торговцу: %s. Получено %d монет." % [title, payout]
 	_save_game()
 
 
@@ -285,6 +370,7 @@ func _save_game() -> void:
 	var payload := {
 		"version": 1,
 		"money": money,
+		"trader_stock": trader_stock,
 		"cards": saved_cards,
 		"production_links": production_links,
 		"research_links": research_links,
@@ -307,7 +393,9 @@ func _load_game() -> void:
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if typeof(parsed) != TYPE_DICTIONARY or int(parsed.get("version", 0)) != 1:
 		return
-	money = maxi(0, int(parsed.get("money", 100)))
+	money = maxi(0, int(parsed.get("money", 5)))
+	if parsed.has("trader_stock"):
+		trader_stock = parsed.trader_stock
 	cards.clear()
 	for raw_card in parsed.get("cards", []):
 		if typeof(raw_card) != TYPE_DICTIONARY:
@@ -318,6 +406,9 @@ func _load_game() -> void:
 		card["production_position"] = Vector2(float(pp[0]), float(pp[1]))
 		card["research_position"] = Vector2(float(rp[0]), float(rp[1]))
 		card["quantity"] = maxi(1, int(card.get("quantity", 1)))
+		if str(card.get("title", "")) in ["Молот", "Горн"]:
+			card["max_durability"] = int(card.get("max_durability", TOOL_MAX_DURABILITY))
+			card["durability"] = int(card.get("durability", card.max_durability))
 		cards.append(card)
 	production_links.clear()
 	for link in parsed.get("production_links", []):
@@ -369,6 +460,15 @@ func _execute_production() -> void:
 		execution_message = "Закончились материалы. Купи железо и уголь у торговца."
 		return
 	var blank_position: Vector2 = Vector2(by_title["Железо"].production_position)
+	for tool_title in ["Молот", "Горн"]:
+		var tool: Dictionary = by_title[tool_title]
+		tool["max_durability"] = int(tool.get("max_durability", TOOL_MAX_DURABILITY))
+		tool["durability"] = int(tool.get("durability", TOOL_MAX_DURABILITY)) - 1
+	var broken_tools: Array[int] = []
+	for tool_title in ["Молот", "Горн"]:
+		var tool: Dictionary = by_title[tool_title]
+		if int(tool.durability) <= 0:
+			broken_tools.append(int(tool.id))
 	var consumed_ids: Array[int] = []
 	for material_title in ["Железо", "Уголь"]:
 		var material: Dictionary = by_title[material_title]
@@ -376,15 +476,18 @@ func _execute_production() -> void:
 		if int(material.quantity) <= 0:
 			consumed_ids.append(int(material.id))
 	for card in cards.duplicate():
-		if consumed_ids.has(int(card.id)):
+		if consumed_ids.has(int(card.id)) or broken_tools.has(int(card.id)):
 			cards.erase(card)
+	consumed_ids.append_array(broken_tools)
 	production_links = _filter_links_for_ids(production_links, consumed_ids)
 	research_links = _filter_links_for_ids(research_links, consumed_ids)
 	_add_card("Подкова", "ИЗДЕЛИЕ")
 	var result_card: Dictionary = cards.back()
 	result_card.production_place = "hand"
 	result_card.production_position = Vector2.ZERO
-	execution_message = "Подкова изготовлена. Материалы списаны со склада."
+	execution_message = "Подкова изготовлена. Материалы списаны, износ инструментов увеличен."
+	if not broken_tools.is_empty():
+		execution_message += " Инструмент сломался — купи замену у торговца."
 	_save_game()
 
 
@@ -783,6 +886,14 @@ func _draw_card(card: Dictionary, top_left: Vector2, on_board := false) -> void:
 	draw_string(font, top_left + Vector2(8, 125), str(card.title), HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 14, INK)
 	if int(card.get("quantity", 1)) > 1:
 		draw_string(font, top_left + Vector2(CARD_SIZE.x - 32, 48), "×%d" % int(card.quantity), HORIZONTAL_ALIGNMENT_CENTER, 26, 12, INK)
+	if str(card.title) in ["Молот", "Горн"]:
+		var max_dur := maxf(1.0, float(card.get("max_durability", TOOL_MAX_DURABILITY)))
+		var wear_ratio := 1.0 - clampf(float(card.get("durability", TOOL_MAX_DURABILITY)) / max_dur, 0.0, 1.0)
+		var bar_rect := Rect2(top_left + Vector2(CARD_SIZE.x - 12, 58), Vector2(6, 58))
+		draw_rect(bar_rect, Color("#8e9188"))
+		if wear_ratio > 0.0:
+			var red_height := bar_rect.size.y * wear_ratio
+			draw_rect(Rect2(bar_rect.position.x, bar_rect.end.y - red_height, bar_rect.size.x, red_height), Color("#b83d32"))
 	draw_line(top_left + Vector2(10, 135), top_left + Vector2(CARD_SIZE.x - 10, 135), Color("#a99a7d"), 1.0)
 	draw_string(font, top_left + Vector2(8, 153), "УЗЕЛ СХЕМЫ" if on_board else "В ИНВЕНТАРЕ", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 8, Color("#675b49"))
 	if on_board:
