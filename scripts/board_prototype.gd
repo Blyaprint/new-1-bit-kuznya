@@ -1006,6 +1006,15 @@ func _sync_card_views() -> void:
 
 
 func _sync_header_captions() -> void:
+	$BoardTitle.text = "ПРОИЗВОДСТВО" if mode == "production" else "ИССЛЕДОВАНИЕ"
+	$BoardSubtitle.text = "СОБИРАЙ РАБОЧУЮ ТЕХНОЛОГИЮ · МАТЕРИАЛЫ РАСХОДУЮТСЯ" if mode == "production" else "ПРОВЕРЯЙ ГИПОТЕЗЫ · ЭКСПЕРИМЕНТЫ БЕСПЛАТНЫ"
+	$StatusMessage.text = execution_message
+	$HandTitle.text = "РУКА МАСТЕРА"
+	var total_items := 0
+	for hand_card in _hand_cards():
+		total_items += int(hand_card.get("quantity", 1))
+	$HandCount.text = "%d ПРЕДМЕТОВ · ПЕРЕТАЩИ НА СТОЛ" % total_items
+	$Instruction.text = "ПЕРЕТАЩИ КАРТУ НА ПОЛЕ  ·  ПКМ: ПОТЯНИ ОТ ВЫХОДА КО ВХОДУ  ·  ВНИЗУ: РУКА"
 	$HeaderButtons/RecipeButton.call("set_caption", "РЕЦЕПТ: %s" % selected_recipe.to_upper())
 	$HeaderButtons/NewGameButton.call("set_caption", "НОВАЯ ИГРА")
 	$HeaderButtons/MarketButton.call("set_caption", "ТОРГОВЕЦ")
@@ -1027,25 +1036,14 @@ func _draw() -> void:
 	_draw_header_button(_journal_button_rect(), "ЖУРНАЛ", journal_open)
 	_draw_header_button(_action_button_rect(), "ВЫПОЛНИТЬ" if mode == "production" else "ИСПЫТАТЬ", true)
 
-	var board := _board_rect()
-	draw_rect(Rect2(board.position + Vector2(5, 7), board.size), Color("#070809", 0.55))
-	draw_rect(board, BOARD_BG)
-	draw_rect(board, Color("#9b8058"), false, 2.0)
-	draw_rect(Rect2(board.position + Vector2(4, 4), board.size - Vector2(8, 8)), Color("#343239"), false, 1.0)
-	var mode_title := "ПРОИЗВОДСТВО" if mode == "production" else "ИССЛЕДОВАНИЕ"
-	var mode_subtitle := "СОБИРАЙ РАБОЧУЮ ТЕХНОЛОГИЮ · МАТЕРИАЛЫ РАСХОДУЮТСЯ" if mode == "production" else "ПРОВЕРЯЙ ГИПОТЕЗЫ · ЭКСПЕРИМЕНТЫ БЕСПЛАТНЫ"
-	draw_string(font, Vector2(board.position.x + 18, board.position.y + 24), mode_title, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, CARD_BORDER)
-	draw_string(font, Vector2(board.position.x + 18, board.position.y + 43), mode_subtitle, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
+
 	_draw_graph_legend()
 	_draw_links()
 	for card in _board_cards():
 		if int(card.id) != drag_card_id:
 			_draw_card(card, Vector2(card[_position_key()]) - CARD_SIZE * 0.5, true)
 
-	draw_rect(Rect2(0.0, size.y - HAND_HEIGHT - STATUS_HEIGHT, size.x, STATUS_HEIGHT), Color("#1d211b"))
-	draw_line(Vector2(0, size.y - HAND_HEIGHT - STATUS_HEIGHT), Vector2(size.x, size.y - HAND_HEIGHT - STATUS_HEIGHT), Color("#675638"), 1.0)
-	draw_circle(Vector2(27, size.y - HAND_HEIGHT - 27), 5.0, ACCENT)
-	draw_string(font, Vector2(42, size.y - HAND_HEIGHT - 23), execution_message, HORIZONTAL_ALIGNMENT_LEFT, size.x - 64, 11, CARD_BORDER)
+
 	_draw_hand()
 	if drag_card_id != -1:
 		var dragged := _card_by_id(drag_card_id)
@@ -1062,7 +1060,6 @@ func _draw() -> void:
 		_draw_market()
 	if confirm_new_game:
 		_draw_new_game_confirmation()
-	draw_string(font, Vector2(28, size.y - 9), "ПЕРЕТАЩИ КАРТУ НА ПОЛЕ  ·  ПКМ: ПОТЯНИ ОТ ВЫХОДА КО ВХОДУ  ·  ВНИЗУ: РУКА", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
 
 
 func _draw_new_game_confirmation() -> void:
@@ -1177,8 +1174,6 @@ func _draw_hand() -> void:
 	var total_items := 0
 	for card in _hand_cards():
 		total_items += int(card.get("quantity", 1))
-	draw_string(font, Vector2(76, hand_area.position.y + 36), "РУКА МАСТЕРА", HORIZONTAL_ALIGNMENT_LEFT, 220, 12, Color("#f0d9b0"))
-	draw_string(font, Vector2(76, hand_area.position.y + 55), "%d ПРЕДМЕТОВ · ПЕРЕТАЩИ НА СТОЛ" % total_items, HORIZONTAL_ALIGNMENT_LEFT, 220, 8, Color("#c1ad8e"))
 	var hand := _hand_cards()
 	for i in range(hand.size()):
 		if int(hand[i].id) == drag_card_id:
