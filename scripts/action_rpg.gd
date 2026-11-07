@@ -15,6 +15,9 @@ var dash_cooldown := 0.0
 var dash_time := 0.0
 var invulnerability := 0.0
 var skill_cooldown := 0.0
+var move_target := Vector3.ZERO
+var has_move_target := false
+var attack_target: Node3D = null
 var gold := 0
 var defeated := 0
 var game_over := false
@@ -330,7 +333,7 @@ func _build_hud() -> void:
 	objective_label.offset_top = 14
 	objective_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	layer.add_child(objective_label)
-	status_label = _hud_label("ЛКМ — АТАКА   SPACE — РЫВОК   Q — ВИХРЬ", 9, Color("#b9c3cc"))
+	status_label = _hud_label("ЛКМ — ДВИЖЕНИЕ / АТАКА   ПКМ — ВИХРЬ   Q — РЫВОК", 9, Color("#b9c3cc"))
 	status_label.anchor_top = 1.0
 	status_label.anchor_bottom = 1.0
 	status_label.offset_left = 10
@@ -377,12 +380,35 @@ func _process(delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	if paused or game_over or player == null:
 		return
-	var input_vector := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-	var camera_right := camera.global_transform.basis.x
-	var camera_forward := -camera.global_transform.basis.z
-	camera_right.y = 0.0
-	camera_forward.y = 0.0
-	var move_dir := (camera_right.normalized() * input_vector.x) + (camera_forward.normalized() * -input_vector.y)
+	var move_dir := Vector3.ZERO
+	if attack_target != null and is_instance_valid(attack_target):
+		var to_enemy := attack_target.global_position - player.global_position
+		to_enemy.y = 0.0
+		if to_enemy.length() > 1.7:
+			move_dir = to_enemy.normalized()
+		else:
+			player.look_at(player.global_position + to_enemy.normalized(), Vector3.UP)
+			if attack_cooldown <= 0.0:
+				_attack_target()
+	else:
+		attack_target = null
+		if has_move_target:
+			var to_point := move_target - player.global_position
+			to_point.y = 0.0
+			if to_point.length() > 0.18:
+				move_dir = to_point.normalized()
+			else:
+				has_move_target = false
+		# WASD remains as an optional alternative to mouse movement.
+		var keyboard := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+		if keyboard.length() > 0.1:
+			var camera_right := camera.global_transform.basis.x
+			var camera_forward := -camera.global_transform.basis.z
+			camera_right.y = 0.0
+			camera_forward.y = 0.0
+			move_dir = (camera_right.normalized() * keyboard.x) + (camera_forward.normalized() * -keyboard.y)
+			move_dir = move_dir.normalized()
+			has_move_target = false
 	if move_dir.length() > 0.05:
 		move_dir = move_dir.normalized()
 		player.look_at(player.global_position + move_dir, Vector3.UP)
@@ -396,15 +422,18 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
 			paused = not paused
-			status_label.text = "ПАУЗА — ESC ДЛЯ ПРОДОЛЖЕНИЯ" if paused else "ЛКМ — АТАКА   SPACE — РЫВОК   Q — ВИХРЬ"
+			status_label.text = "ПАУЗА — ESC ДЛЯ ПРОДОЛЖЕНИЯ" if paused else "ЛКМ — ДВИЖЕНИЕ / АТАКА   ПКМ — ВИХРЬ   Q — РЫВОК"
 		elif event.keycode == KEY_R and game_over:
 			get_tree().reload_current_scene()
-		elif event.keycode == KEY_SPACE and dash_cooldown <= 0.0:
+		elif (event.keycode == KEY_Q or event.keycode == KEY_SPACE) and dash_cooldown <= 0.0:
 			_dash()
-		elif event.keycode == KEY_Q and skill_cooldown <= 0.0:
+		elif event.keycode == KEY_E and skill_cooldown <= 0.0:
 			_spin_attack()
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		_attack()
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			_handle_left_click()
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			_spin_attack()
 
 func _face_toward_mouse() -> void:
 	if camera == null or player == null:
@@ -421,6 +450,14 @@ func _face_toward_mouse() -> void:
 
 func _dash() -> void:
 	var direction := Vector3(player.velocity.x, 0, player.velocity.z).normalized()
+	if direction.length() < 0.1 and attack_target != null and is_instance_valid(attack_target):
+		direction = attack_target.global_position - player.global_position
+		direction.y = 0.0
+		direction = direction.normalized()
+	if direction.length() < 0.1 and has_move_target:
+		direction = move_target - player.global_position
+		direction.y = 0.0
+		direction = direction.normalized()
 	if direction.length() < 0.1:
 		direction = -player.global_transform.basis.z
 	dash_time = 0.22
@@ -429,21 +466,47 @@ func _dash() -> void:
 	player.velocity.z = direction.z * 13.0
 	invulnerability = 0.28
 
-func _attack() -> void:
-	if attack_cooldown > 0.0 or game_over or paused:
+func _handle_left_click() -> void:
+	if game_over or paused:
+		return
+	var mouse_pos := get_viewport().get_mouse_position()
+	var selected_enemy: Node3D = null
+	var nearest_screen_distance := 42.0
+	for enemy_data in enemies:
+		var enemy_node: Node3D = enemy_data["node"]
+		var enemy_screen_pos := camera.unproject_position(enemy_node.global_position + Vector3.UP * 0.45)
+		var screen_distance := enemy_screen_pos.distance_to(mouse_pos)
+		if screen_distance < nearest_screen_distance:
+			nearest_screen_distance = screen_distance
+			selected_enemy = enemy_node
+	if selected_enemy != null:
+		attack_target = selected_enemy
+		has_move_target = false
+		status_label.text = "ЦЕЛЬ ВЫБРАНА"
+		return
+	attack_target = null
+	var ray_origin := camera.project_ray_origin(mouse_pos)
+	var ray_direction := camera.project_ray_normal(mouse_pos)
+	var ground_hit = Plane(Vector3.UP, 0.0).intersects_ray(ray_origin, ray_direction)
+	if ground_hit != null:
+		move_target = ground_hit
+		move_target.x = clampf(move_target.x, -10.7, 10.7)
+		move_target.z = clampf(move_target.z, -10.7, 10.7)
+		has_move_target = true
+		status_label.text = "ДВИЖЕНИЕ"
+
+func _attack_target() -> void:
+	if attack_cooldown > 0.0 or attack_target == null or not is_instance_valid(attack_target):
 		return
 	attack_cooldown = 0.42
-	_face_toward_mouse()
-	var facing := -player.global_transform.basis.z
-	var hit_any := false
 	for i in range(enemies.size() - 1, -1, -1):
-		var enemy_node: Node3D = enemies[i]["node"]
-		var offset: Vector3 = enemy_node.global_position - player.global_position
-		var flat := Vector3(offset.x, 0, offset.z)
-		if flat.length() <= 2.1 and facing.dot(flat.normalized()) > 0.15:
+		if enemies[i]["node"] == attack_target:
 			_damage_enemy(i, 1)
-			hit_any = true
-	status_label.text = "ПОПАДАНИЕ!" if hit_any else "УДАР ВПУСТУЮ"
+			status_label.text = "ПОПАДАНИЕ!"
+			if attack_target == null or not is_instance_valid(attack_target):
+				attack_target = null
+			return
+	attack_target = null
 
 func _spin_attack() -> void:
 	if game_over or paused:
