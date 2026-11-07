@@ -998,7 +998,7 @@ func _sync_card_views() -> void:
 			view.z_index = 2
 		view.position = target
 		view.size = CARD_SIZE
-		view.call("set_card_data", card, on_board)
+		view.call("set_card_data", card, on_board, _input_ports(card), _output_ports(card))
 	for child in card_views.get_children():
 		if child is Control and str(child.name).begins_with("Card_"):
 			var id_text := str(child.name).trim_prefix("Card_")
