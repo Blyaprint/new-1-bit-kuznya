@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://scripts/ui/market_layer.gd" id="3"]
 
 [node name="MarketLayer" type="Control"]
+z_index = 100
 visible = false
 layout_mode = 3
 anchors_preset = 15
