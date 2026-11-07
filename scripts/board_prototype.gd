@@ -36,6 +36,7 @@ var next_card_id := 1
 var mode := "production"
 var journal_open := false
 var market_open := false
+var confirm_new_game := false
 var money := 5
 var trader_stock := {"Железо": 99, "Уголь": 99, "Молот": 99, "Горн": 99}
 var trade_drag_source := ""
@@ -123,6 +124,21 @@ func _gui_input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		mouse_position = event.position
 		if event.pressed:
+			if confirm_new_game:
+				if _new_game_confirm_rect().has_point(mouse_position):
+					_start_new_game()
+				elif _new_game_cancel_rect().has_point(mouse_position):
+					confirm_new_game = false
+				queue_redraw()
+				accept_event()
+				return
+			if _new_game_button_rect().has_point(mouse_position):
+				confirm_new_game = true
+				market_open = false
+				journal_open = false
+				queue_redraw()
+				accept_event()
+				return
 			if _market_button_rect().has_point(mouse_position):
 				market_open = not market_open
 				journal_open = false
@@ -262,7 +278,54 @@ func _research_button_rect() -> Rect2:
 
 
 func _recipe_button_rect() -> Rect2:
-	return Rect2(Vector2(430.0, 12.0), Vector2(220.0, 40.0))
+	return Rect2(Vector2(430.0, 12.0), Vector2(130.0, 40.0))
+
+
+func _new_game_button_rect() -> Rect2:
+	return Rect2(Vector2(570.0, 12.0), Vector2(112.0, 40.0))
+
+
+func _new_game_dialog_rect() -> Rect2:
+	return Rect2(size * 0.5 - Vector2(210.0, 105.0), Vector2(420.0, 210.0))
+
+
+func _new_game_confirm_rect() -> Rect2:
+	return Rect2(_new_game_dialog_rect().position + Vector2(220.0, 150.0), Vector2(170.0, 38.0))
+
+
+func _new_game_cancel_rect() -> Rect2:
+	return Rect2(_new_game_dialog_rect().position + Vector2(30.0, 150.0), Vector2(170.0, 38.0))
+
+
+func _start_new_game() -> void:
+	cards.clear()
+	production_links.clear()
+	research_links.clear()
+	discoveries.clear()
+	next_card_id = 1
+	money = 5
+	trader_stock = {"Железо": 99, "Уголь": 99, "Молот": 99, "Горн": 99, "Подкова": 0, "Гвозди": 0, "Скоба": 0}
+	selected_recipe = "Подкова"
+	mode = "production"
+	market_open = false
+	journal_open = false
+	trade_drag_source = ""
+	trade_drag_title = ""
+	drag_card_id = -1
+	connecting_from_id = -1
+	action_button_held = false
+	_add_card("Железо", "МАТЕРИАЛ", 3)
+	_add_card("Уголь", "МАТЕРИАЛ", 3)
+	_add_card("Молот", "ИНСТРУМЕНТ")
+	_add_card("Горн", "ОПЕРАЦИЯ")
+	for card in cards:
+		if str(card.title) in ["Молот", "Горн"]:
+			card["durability"] = TOOL_MAX_DURABILITY
+			card["max_durability"] = TOOL_MAX_DURABILITY
+	execution_message = "Новая игра началась. В распоряжении 5 монет и стартовое оборудование."
+	confirm_new_game = false
+	_save_game()
+	queue_redraw()
 
 
 func _cycle_recipe() -> void:
@@ -861,6 +924,7 @@ func _draw() -> void:
 	draw_string(font, Vector2(28, 49), "ИНЖЕНЕРНАЯ МАСТЕРСКАЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
 	draw_string(font, Vector2(260, 36), "МОНЕТЫ: %d" % money, HORIZONTAL_ALIGNMENT_LEFT, 150, 14, ACCENT)
 	_draw_header_button(_recipe_button_rect(), "РЕЦЕПТ: %s" % selected_recipe.to_upper(), true)
+	_draw_header_button(_new_game_button_rect(), "НОВАЯ ИГРА", false)
 	_draw_header_button(_market_button_rect(), "ТОРГОВЕЦ", market_open)
 	_draw_header_button(_production_button_rect(), "ПРОИЗВОДСТВО", mode == "production")
 	_draw_header_button(_research_button_rect(), "ИССЛЕДОВАНИЕ", mode == "research")
@@ -898,7 +962,20 @@ func _draw() -> void:
 		_draw_journal()
 	if market_open:
 		_draw_market()
+	if confirm_new_game:
+		_draw_new_game_confirmation()
 	draw_string(font, Vector2(28, size.y - 9), "ПЕРЕТАЩИ КАРТУ НА ПОЛЕ  ·  ПКМ: ПОТЯНИ ОТ ВЫХОДА КО ВХОДУ  ·  ВНИЗУ: РУКА", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
+
+
+func _draw_new_game_confirmation() -> void:
+	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.72))
+	var panel := _new_game_dialog_rect()
+	draw_rect(panel, Color("#171b15"))
+	draw_rect(panel, Color("#d0a15e"), false, 2.0)
+	draw_string(font, panel.position + Vector2(28, 42), "НАЧАТЬ НОВУЮ ИГРУ?", HORIZONTAL_ALIGNMENT_LEFT, 360, 18, ACCENT)
+	draw_multiline_string(font, panel.position + Vector2(28, 78), "Текущий прогресс, деньги, предметы и оборудование будут сброшены. Начальный набор: 5 монет, железо, уголь, молот и горн.", HORIZONTAL_ALIGNMENT_LEFT, 360, 12, 0, CARD_BORDER)
+	_draw_header_button(_new_game_cancel_rect(), "ОТМЕНА", false)
+	_draw_header_button(_new_game_confirm_rect(), "НАЧАТЬ ЗАНОВО", true)
 
 
 func _draw_workshop_background() -> void:
