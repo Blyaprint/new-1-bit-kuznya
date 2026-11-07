@@ -638,6 +638,8 @@ func _handle_left_click() -> void:
 	var selected_enemy: Node3D = null
 	var nearest_screen_distance := 42.0
 	for enemy_data in enemies:
+		if bool(enemy_data.get("dead", false)):
+			continue
 		var enemy_node: Node3D = enemy_data["node"]
 		var enemy_screen_pos := camera.unproject_position(enemy_node.global_position + Vector3.UP * 0.45)
 		var screen_distance := enemy_screen_pos.distance_to(mouse_pos)
@@ -735,6 +737,8 @@ func _spin_attack() -> void:
 	_spawn_combat_burst(player.global_position + Vector3.UP * 0.08, 3.0, mat_accent)
 	var hit_any := false
 	for i in range(enemies.size() - 1, -1, -1):
+		if bool(enemies[i].get("dead", false)):
+			continue
 		var enemy_node: Node3D = enemies[i]["node"]
 		var offset: Vector3 = enemy_node.global_position - player.global_position
 		if Vector2(offset.x, offset.z).length() <= 3.0:
@@ -791,7 +795,8 @@ func _update_enemies(delta: float) -> void:
 		if bool(enemy.get("dead", false)):
 			enemy["death_timer"] = maxf(0.0, float(enemy["death_timer"]) - delta)
 			var death_progress := 1.0 - float(enemy["death_timer"]) / 0.48
-			node.position += Vector3(enemy["knockback"]) * delta
+			var death_knockback: Vector3 = enemy["knockback"]
+			node.position += death_knockback * delta
 			node.rotation.z = lerpf(0.0, 1.25, death_progress)
 			node.scale = Vector3.ONE * (1.0 - death_progress * 0.82)
 			if float(enemy["death_timer"]) <= 0.0:
