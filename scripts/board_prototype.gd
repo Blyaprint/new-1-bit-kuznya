@@ -8,8 +8,8 @@ const STATUS_HEIGHT := 24.0
 const BOARD_MARGIN := 14.0
 
 const BG := Color("#000000")
-const BOARD_BG := Color("#080808")
-const CARD_BG := Color("#111111")
+const BOARD_BG := Color("#000000")
+const CARD_BG := Color("#000000")
 const CARD_BORDER := Color("#ffffff")
 const INK := Color("#ffffff")
 const MUTED := Color("#ffffff")
@@ -1119,7 +1119,7 @@ func _category_color(category: String) -> Color:
 		"ИЗДЕЛИЕ":
 			return PRODUCT_COLOR
 		_:
-			return Color("#888888")
+			return Color("#ffffff")
 
 
 func _category_label(category: String) -> String:

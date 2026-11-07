@@ -31,8 +31,8 @@ func _process(_delta: float) -> void:
 		drag_preview.global_position = get_global_mouse_position() - drag_preview.size * 0.5
 		var over_merchant := merchant_window.get_global_rect().has_point(get_global_mouse_position())
 		var over_inventory := inventory_window.get_global_rect().has_point(get_global_mouse_position())
-		merchant_window.modulate = Color("#fff0cf") if drag_source == "player" and over_merchant else Color.WHITE
-		inventory_window.modulate = Color("#fff0cf") if drag_source == "merchant" and over_inventory else Color.WHITE
+		merchant_window.modulate = Color.WHITE if drag_source == "player" and over_merchant else Color.WHITE
+		inventory_window.modulate = Color.WHITE if drag_source == "merchant" and over_inventory else Color.WHITE
 
 
 func _create_drag_preview() -> void:
@@ -42,17 +42,17 @@ func _create_drag_preview() -> void:
 	drag_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	drag_preview.z_index = 100
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#29251e", 0.97)
-	style.border_color = Color("#f0c77f")
+	style.bg_color = Color("#000000")
+	style.border_color = Color.WHITE
 	style.set_border_width_all(3)
 	style.set_corner_radius_all(7)
-	style.shadow_color = Color(0, 0, 0, 0.65)
+	style.shadow_color = Color("#000000")
 	style.shadow_size = 12
 	drag_preview.add_theme_stylebox_override("panel", style)
 	drag_label = Label.new()
 	drag_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	drag_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	drag_label.add_theme_color_override("font_color", Color("#f5dfb8"))
+	drag_label.add_theme_color_override("font_color", Color.WHITE)
 	drag_label.add_theme_font_size_override("font_size", 15)
 	drag_preview.add_child(drag_label)
 	add_child(drag_preview)
