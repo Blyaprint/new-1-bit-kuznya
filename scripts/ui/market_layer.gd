@@ -19,7 +19,8 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_set_mouse_passthrough(self)
 	$Backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	$MerchantWindow/Margin/Layout/CloseButton.pressed.connect(func() -> void:
+	$MerchantWindow/CloseButton.mouse_filter = Control.MOUSE_FILTER_STOP
+	$MerchantWindow/CloseButton.pressed.connect(func() -> void:
 		close_requested.emit()
 	)
 	_create_drag_preview()
