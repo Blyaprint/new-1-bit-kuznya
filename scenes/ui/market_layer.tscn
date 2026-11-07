@@ -31,17 +31,17 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -350.0
-offset_top = -300.0
-offset_right = -20.0
-offset_bottom = 300.0
+offset_left = -312.0
+offset_top = -160.0
+offset_right = -8.0
+offset_bottom = 160.0
 
 [node name="MerchantWindow" parent="." instance=ExtResource("2")]
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = 20.0
-offset_top = -300.0
-offset_right = 350.0
-offset_bottom = 205.0
+offset_left = 8.0
+offset_top = -160.0
+offset_right = 312.0
+offset_bottom = 160.0
