@@ -432,7 +432,9 @@ func _label(text_value: String, color: Color, size: int) -> Label:
 	return label
 
 func _tag(text_value: String) -> Label:
-	return _label("[ %s ]" % text_value, BLACK, 9)
+	var tag := _label("[ %s ]" % text_value, BLACK, 9)
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return tag
 
 func _style_container(control: Control, background: Color, border: Color) -> void:
 	if control is PanelContainer:
