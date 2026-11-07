@@ -15,6 +15,7 @@ Prototype project for Godot 4.6.
 ## Trader and economy
 
 - A fresh game starts with **5 coins**, 3 iron, 3 coal, one hammer and one furnace.
+- **НОВАЯ ИГРА** in the top bar starts a fresh run after confirmation, restoring 5 coins, starter materials and tools, and clearing the old workshop layout, discoveries and save progress.
 - Open **ТОРГОВЕЦ** for a separate two-column trade window with square, Diablo-inspired inventory slots.
 - Hover over a slot to see an item description and drag an item to see its icon attached to the cursor.
 - Drag an item from your inventory to the trader's side to sell it.
