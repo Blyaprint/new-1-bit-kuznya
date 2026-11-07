@@ -1,7 +1,7 @@
 extends Control
 
-const INK := Color("#111111")
-const PAPER := Color("#F2F2F2")
+const INK := Color("#000000")
+const PAPER := Color("#FFFFFF")
 
 var turn_number := 1
 var player_turn := true
@@ -21,6 +21,7 @@ func _ready() -> void:
 func _build_screen() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
