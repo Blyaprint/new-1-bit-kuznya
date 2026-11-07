@@ -13,6 +13,7 @@ var drag_title := ""
 
 
 func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_STOP
 	_set_mouse_passthrough(self)
 	$Backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	$MerchantWindow/Margin/Layout/CloseButton.pressed.connect(func() -> void:
