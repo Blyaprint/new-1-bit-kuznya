@@ -3,19 +3,21 @@
 This branch starts a new direction for the project: a compact 3D isometric action RPG prototype.
 
 ## Current playable-slice scope
-- Fixed orthographic isometric camera that follows the player.
+- Fixed-angle orthographic isometric camera that follows the hero instantly, with no rotation, zoom or smoothing.
 - Low-resolution 3D presentation with nearest-neighbor scaling.
 - One enclosed dungeon room with tile floor, stone walls, pillars and warm torches.
-- WASD movement, mouse-directed melee, a short dash and an area skill.
+- Left-click movement and enemy targeting with automatic close-range attacks; right-click area skill; keyboard dash and optional WASD movement.
 - Six pursuing skeleton enemies with contact damage.
 - Gold drops that can be collected.
 - Health, gold and clear-progress HUD; victory/defeat and restart.
 
 ## Controls
-- WASD — move
-- Left mouse — melee attack
-- Space — dash (brief invulnerability)
-- Q — area attack
+- Left mouse on the ground — move to the clicked point
+- Left mouse on an enemy — approach and attack automatically
+- Right mouse — area attack
+- Q or Space — dash (brief invulnerability)
+- E — area attack (keyboard alternative)
+- WASD — optional direct movement
 - Esc — pause/resume
 - R — restart after victory or defeat
 
