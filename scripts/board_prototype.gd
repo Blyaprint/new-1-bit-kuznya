@@ -1012,6 +1012,8 @@ func _sync_connection_preview() -> void:
 func _sync_card_views() -> void:
 	if not is_instance_valid(card_views):
 		return
+	# Keep both board cards and hand cards behind the modal market UI.
+	card_views.visible = not market_open
 	var visible_ids: Array[int] = []
 	for card in cards:
 		var card_id := int(card.id)
