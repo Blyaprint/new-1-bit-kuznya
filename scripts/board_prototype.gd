@@ -585,6 +585,7 @@ func _save_game() -> void:
 		saved_cards.append(data)
 	var payload := {
 		"version": 1,
+		"layout_version": 2,
 		"money": money,
 		"selected_recipe": selected_recipe,
 		"trader_stock": trader_stock,
@@ -627,8 +628,13 @@ func _load_game() -> void:
 		var card: Dictionary = raw_card.duplicate()
 		var pp: Array = card.get("production_position", [0.0, 0.0])
 		var rp: Array = card.get("research_position", [0.0, 0.0])
-		card["production_position"] = Vector2(float(pp[0]), float(pp[1]))
-		card["research_position"] = Vector2(float(rp[0]), float(rp[1]))
+		var production_position := Vector2(float(pp[0]), float(pp[1]))
+		var research_position := Vector2(float(rp[0]), float(rp[1]))
+		if int(parsed.get("layout_version", 1)) < 2:
+			production_position *= Vector2(0.5, 0.45)
+			research_position *= Vector2(0.5, 0.45)
+		card["production_position"] = _clamp_to_board(production_position) if str(card.get("production_place", "hand")) == "board" else production_position
+		card["research_position"] = _clamp_to_board(research_position) if str(card.get("research_place", "hand")) == "board" else research_position
 		card["quantity"] = maxi(1, int(card.get("quantity", 1)))
 		if str(card.get("title", "")) in ["Молот", "Горн"]:
 			card["max_durability"] = int(card.get("max_durability", TOOL_MAX_DURABILITY))
