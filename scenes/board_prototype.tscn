@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/board_prototype.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/ui/market_layer.tscn" id="2"]
@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" path="res://assets/ui/board_surface.svg" id="6"]
 [ext_resource type="Texture2D" path="res://assets/ui/status_strip.svg" id="7"]
 [ext_resource type="PackedScene" path="res://scenes/ui/modal_layer.tscn" id="8"]
+[ext_resource type="PackedScene" path="res://scenes/ui/link_view.tscn" id="9"]
 
 [node name="BoardPrototype" type="Control"]
 layout_mode = 3
@@ -214,3 +215,15 @@ mouse_filter = 2
 
 [node name="ModalLayer" parent="." instance=ExtResource("8")]
 z_index = 20
+
+[node name="LinkViews" type="Node2D" parent="."]
+z_index = 1
+
+[node name="ConnectionPreview" type="Node2D" parent="."]
+z_index = 3
+visible = false
+
+[node name="Line" type="Line2D" parent="ConnectionPreview"]
+width = 4.0
+default_color = Color(0.84, 0.67, 0.41, 1)
+antialiased = true
