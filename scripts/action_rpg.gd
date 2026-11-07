@@ -18,6 +18,7 @@ var skill_cooldown := 0.0
 var move_target := Vector3.ZERO
 var has_move_target := false
 var attack_target: Node3D = null
+var click_marker: MeshInstance3D
 var gold := 0
 var defeated := 0
 var game_over := false
@@ -131,11 +132,23 @@ func _build_world() -> void:
 	_add_wall(Vector3(-12, 1.1, 0), Vector3(0.7, 2.2, 24))
 	_add_wall(Vector3(12, 1.1, 0), Vector3(0.7, 2.2, 24))
 	_add_dungeon_sigil()
+	_build_click_marker()
 
 	for p in [Vector3(-8, 0, -8), Vector3(8, 0, -8), Vector3(-8, 0, 8), Vector3(8, 0, 8)]:
 		_add_pillar(p)
 	for p in [Vector3(-10.5, 0, -4), Vector3(10.5, 0, 4), Vector3(-4, 0, -10.5), Vector3(4, 0, 10.5)]:
 		_add_torch(p)
+
+func _build_click_marker() -> void:
+	click_marker = MeshInstance3D.new()
+	var marker_mesh := TorusMesh.new()
+	marker_mesh.inner_radius = 0.24
+	marker_mesh.outer_radius = 0.31
+	click_marker.mesh = marker_mesh
+	click_marker.material_override = mat_accent
+	click_marker.visible = false
+	click_marker.position.y = 0.075
+	add_child(click_marker)
 
 func _add_dungeon_sigil() -> void:
 	var ring := MeshInstance3D.new()
@@ -404,7 +417,16 @@ func _build_enemies() -> void:
 			eye.material_override = eye_mat
 			eye.position = Vector3(eye_x, 0.65, -0.19)
 			enemy.add_child(eye)
-		enemies.append({"node": enemy, "hp": 3, "attack_timer": 0.6, "flash": 0.0})
+		var selection_ring := MeshInstance3D.new()
+		var ring_mesh := TorusMesh.new()
+		ring_mesh.inner_radius = 0.43
+		ring_mesh.outer_radius = 0.49
+		selection_ring.mesh = ring_mesh
+		selection_ring.material_override = mat_accent
+		selection_ring.position.y = -0.43
+		selection_ring.visible = false
+		enemy.add_child(selection_ring)
+		enemies.append({"node": enemy, "hp": 3, "attack_timer": 0.6, "flash": 0.0, "selection_ring": selection_ring})
 
 func _build_camera() -> void:
 	camera = Camera3D.new()
@@ -528,6 +550,8 @@ func _physics_process(delta: float) -> void:
 				move_dir = to_point.normalized()
 			else:
 				has_move_target = false
+				if click_marker != null:
+					click_marker.visible = false
 		# WASD remains as an optional alternative to mouse movement.
 		var keyboard := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 		if keyboard.length() > 0.1:
@@ -538,6 +562,10 @@ func _physics_process(delta: float) -> void:
 			move_dir = (camera_right.normalized() * keyboard.x) + (camera_forward.normalized() * -keyboard.y)
 			move_dir = move_dir.normalized()
 			has_move_target = false
+	if attack_target == null:
+		for enemy_data in enemies:
+			var ring: MeshInstance3D = enemy_data["selection_ring"]
+			ring.visible = false
 	if move_dir.length() > 0.05:
 		move_dir = move_dir.normalized()
 		player.look_at(player.global_position + move_dir, Vector3.UP)
@@ -611,9 +639,17 @@ func _handle_left_click() -> void:
 	if selected_enemy != null:
 		attack_target = selected_enemy
 		has_move_target = false
+		if click_marker != null:
+			click_marker.visible = false
+		for enemy_data in enemies:
+			var ring: MeshInstance3D = enemy_data["selection_ring"]
+			ring.visible = enemy_data["node"] == selected_enemy
 		status_label.text = "ЦЕЛЬ ВЫБРАНА"
 		return
 	attack_target = null
+	for enemy_data in enemies:
+		var ring: MeshInstance3D = enemy_data["selection_ring"]
+		ring.visible = false
 	var ray_origin := camera.project_ray_origin(mouse_pos)
 	var ray_direction := camera.project_ray_normal(mouse_pos)
 	var ground_hit = Plane(Vector3.UP, 0.0).intersects_ray(ray_origin, ray_direction)
@@ -622,6 +658,9 @@ func _handle_left_click() -> void:
 		move_target.x = clampf(move_target.x, -10.7, 10.7)
 		move_target.z = clampf(move_target.z, -10.7, 10.7)
 		has_move_target = true
+		if click_marker != null:
+			click_marker.global_position = Vector3(move_target.x, 0.075, move_target.z)
+			click_marker.visible = true
 		status_label.text = "ДВИЖЕНИЕ"
 
 func _attack_target() -> void:
