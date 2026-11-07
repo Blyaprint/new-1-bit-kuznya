@@ -6,8 +6,8 @@
 3. **Readable card table** — high contrast, restrained ornament, clear numbers and silhouettes at 640×360.
 
 ## Palette
-- Ink: `#111111`
-- Paper: `#F2F2F2`
+- Ink: `#000000`
+- Paper: `#FFFFFF`
 
 No third color. No grayscale, antialiasing, gradients, alpha shading or soft shadows. Use patterns, pixel clusters and negative space to suggest material and depth.
 
