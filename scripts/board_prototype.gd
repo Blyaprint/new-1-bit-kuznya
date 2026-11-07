@@ -60,6 +60,8 @@ var font: Font
 
 func _ready() -> void:
 	font = ThemeDB.fallback_font
+	market_layer.trade_requested.connect(_on_market_trade_requested)
+	market_layer.close_requested.connect(_on_market_close_requested)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_add_card("Железо", "МАТЕРИАЛ", 3)
 	_add_card("Уголь", "МАТЕРИАЛ", 3)
@@ -113,6 +115,22 @@ func _process(_delta: float) -> void:
 			_refresh_market_scene()
 	if market_animating:
 		queue_redraw()
+
+
+func _on_market_trade_requested(source: String, title: String, target: String) -> void:
+	if source == "merchant" and target == "player":
+		_buy_from_trader(title)
+	elif source == "player" and target == "merchant":
+		_sell_to_trader(title)
+	queue_redraw()
+
+
+func _on_market_close_requested() -> void:
+	market_open = false
+	market_layer.visible = false
+	trade_drag_source = ""
+	trade_drag_title = ""
+	queue_redraw()
 
 
 func _refresh_market_scene() -> void:
