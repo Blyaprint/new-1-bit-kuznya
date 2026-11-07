@@ -5,6 +5,7 @@ extends Control
 @onready var quantity_label: Label = $Quantity
 @onready var state_label: Label = $State
 @onready var durability: ProgressBar = $Durability
+var _last_emblem_file := ""
 
 func set_card_data(data: Dictionary, on_board: bool, input_ports: Array = [], output_ports: Array = []) -> void:
 	category_label.text = str(data.get("category", ""))
@@ -14,7 +15,9 @@ func set_card_data(data: Dictionary, on_board: bool, input_ports: Array = [], ou
 		"ОПЕРАЦИЯ": emblem_file = "emblem_operation.svg"
 		"ОБЪЕКТ": emblem_file = "emblem_object.svg"
 		"ИЗДЕЛИЕ": emblem_file = "emblem_product.svg"
-	emblem.texture = load("res://assets/ui/" + emblem_file) as Texture2D
+	if emblem_file != _last_emblem_file:
+		emblem.texture = load("res://assets/ui/" + emblem_file) as Texture2D
+		_last_emblem_file = emblem_file
 	title_label.text = str(data.get("title", ""))
 	var quantity := int(data.get("quantity", 1))
 	quantity_label.text = "×%d" % quantity if quantity > 1 else ""
