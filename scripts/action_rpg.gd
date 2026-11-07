@@ -30,6 +30,9 @@ var gold_label: Label
 var objective_label: Label
 var overlay: ColorRect
 var result_label: Label
+var weapon_pivot: Node3D
+var attack_anim_time := 0.0
+var combat_effects: Array[Dictionary] = []
 
 var mat_floor: StandardMaterial3D
 var mat_tile_a: StandardMaterial3D
@@ -336,22 +339,25 @@ func _build_player() -> void:
 	helmet.position.y = 0.83
 	player.add_child(helmet)
 
+	weapon_pivot = Node3D.new()
+	weapon_pivot.name = "WeaponPivot"
+	weapon_pivot.position = Vector3(0.43, 0.02, -0.08)
+	player.add_child(weapon_pivot)
 	var sword := MeshInstance3D.new()
 	var sword_mesh := BoxMesh.new()
 	sword_mesh.size = Vector3(0.11, 0.78, 0.055)
 	sword.mesh = sword_mesh
 	sword.material_override = mat_sword
-	sword.position = Vector3(0.43, 0.02, -0.08)
 	sword.rotation.z = -0.22
-	player.add_child(sword)
+	weapon_pivot.add_child(sword)
 	var guard := MeshInstance3D.new()
 	var guard_mesh := BoxMesh.new()
 	guard_mesh.size = Vector3(0.32, 0.07, 0.11)
 	guard.mesh = guard_mesh
 	guard.material_override = mat_bronze
-	guard.position = Vector3(0.43, -0.18, -0.08)
+	guard.position = Vector3(0, -0.18, 0)
 	guard.rotation.z = -0.22
-	player.add_child(guard)
+	weapon_pivot.add_child(guard)
 	var foot_shadow := MeshInstance3D.new()
 	var shadow_mesh := CylinderMesh.new()
 	shadow_mesh.top_radius = 0.48
@@ -524,6 +530,8 @@ func _process(delta: float) -> void:
 	invulnerability = maxf(0.0, invulnerability - delta)
 	skill_cooldown = maxf(0.0, skill_cooldown - delta)
 	_update_camera()
+	_update_weapon_animation(delta)
+	_update_combat_effects(delta)
 	_update_enemies(delta)
 	_update_loot()
 	_update_hud()
@@ -663,13 +671,57 @@ func _handle_left_click() -> void:
 			click_marker.visible = true
 		status_label.text = "ДВИЖЕНИЕ"
 
+
+func _update_weapon_animation(delta: float) -> void:
+	if weapon_pivot == null:
+		return
+	if attack_anim_time > 0.0:
+		attack_anim_time = maxf(0.0, attack_anim_time - delta)
+		var progress := 1.0 - attack_anim_time / 0.24
+		var swing := sin(progress * PI)
+		weapon_pivot.rotation.z = lerpf(-0.22, -1.35, swing)
+	else:
+		weapon_pivot.rotation.z = lerpf(weapon_pivot.rotation.z, -0.22, minf(1.0, delta * 18.0))
+
+func _spawn_combat_burst(world_position: Vector3, radius: float, effect_material: Material) -> void:
+	var effect := MeshInstance3D.new()
+	var ring := TorusMesh.new()
+	ring.inner_radius = radius * 0.78
+	ring.outer_radius = radius
+	effect.mesh = ring
+	effect.material_override = effect_material
+	effect.global_position = world_position
+	effect.rotation_degrees.x = 90.0
+	effect.scale = Vector3.ONE * 0.25
+	add_child(effect)
+	combat_effects.append({"node": effect, "life": 0.22, "duration": 0.22})
+
+func _update_combat_effects(delta: float) -> void:
+	for i in range(combat_effects.size() - 1, -1, -1):
+		var effect: Dictionary = combat_effects[i]
+		var node: MeshInstance3D = effect["node"]
+		if not is_instance_valid(node):
+			combat_effects.remove_at(i)
+			continue
+		effect["life"] = maxf(0.0, float(effect["life"]) - delta)
+		var progress := 1.0 - float(effect["life"]) / float(effect["duration"])
+		node.scale = Vector3.ONE * lerpf(0.25, 1.0, progress)
+		node.transparency = progress
+		if float(effect["life"]) <= 0.0:
+			node.queue_free()
+			combat_effects.remove_at(i)
+		else:
+			combat_effects[i] = effect
+
 func _attack_target() -> void:
 	if attack_cooldown > 0.0 or attack_target == null or not is_instance_valid(attack_target):
 		return
 	attack_cooldown = 0.42
+	attack_anim_time = 0.24
 	for i in range(enemies.size() - 1, -1, -1):
 		if enemies[i]["node"] == attack_target:
 			_damage_enemy(i, 1)
+			_spawn_combat_burst(attack_target.global_position + Vector3.UP * 0.12, 0.72, mat_sword)
 			status_label.text = "ПОПАДАНИЕ!"
 			if attack_target == null or not is_instance_valid(attack_target):
 				attack_target = null
@@ -680,12 +732,14 @@ func _spin_attack() -> void:
 	if game_over or paused:
 		return
 	skill_cooldown = 4.0
+	_spawn_combat_burst(player.global_position + Vector3.UP * 0.08, 3.0, mat_accent)
 	var hit_any := false
 	for i in range(enemies.size() - 1, -1, -1):
 		var enemy_node: Node3D = enemies[i]["node"]
 		var offset: Vector3 = enemy_node.global_position - player.global_position
 		if Vector2(offset.x, offset.z).length() <= 3.0:
 			_damage_enemy(i, 2)
+			_spawn_combat_burst(enemy_node.global_position + Vector3.UP * 0.12, 0.9, mat_accent)
 			hit_any = true
 	status_label.text = "ВИХРЬ!" if hit_any else "ВИХРЬ — НИКОГО НЕ ЗАДЕЛ"
 
