@@ -13,7 +13,9 @@ func _ready() -> void:
 
 
 func _on_mouse_entered() -> void:
-	_set_highlight(true)
+	var name_label := get_node_or_null("Content/Name") as Label
+	if name_label != null and not name_label.text.is_empty():
+		_set_highlight(true)
 
 
 func _on_mouse_exited() -> void:
