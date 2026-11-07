@@ -24,8 +24,8 @@ class DropZone extends HBoxContainer:
 		var target_index := -1
 		if zone_id == "hand":
 			for child in get_children():
-				if child is CardFace and at_position.x < child.position.x + child.size.x * 0.5:
-					target_index = child.card_index
+				if child.has_method("get_card_index") and at_position.x < child.position.x + child.size.x * 0.5:
+					target_index = int(child.call("get_card_index"))
 					break
 		controller.call("_handle_drop", zone_id, data, target_index)
 
@@ -41,12 +41,12 @@ class CardFace extends Control:
 	var controller: Control
 	var card_index := -1
 	var card_data: Dictionary = {}
-	var drop_zone: DropZone
+	var drop_zone
 	var compact := false
 	var preview_mode := false
 	var hovered := false
 
-	func configure(data: Dictionary, owner: Control, index: int, zone: DropZone, small := false) -> void:
+	func configure(data: Dictionary, owner: Control, index: int, zone, small := false) -> void:
 		card_data = data
 		controller = owner
 		card_index = index
@@ -57,6 +57,9 @@ class CardFace extends Control:
 		mouse_entered.connect(_on_mouse_entered)
 		mouse_exited.connect(_on_mouse_exited)
 		queue_redraw()
+
+	func get_card_index() -> int:
+		return card_index
 
 	func _on_mouse_entered() -> void:
 		hovered = true
