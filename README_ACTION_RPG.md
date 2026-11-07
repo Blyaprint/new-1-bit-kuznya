@@ -7,7 +7,7 @@ This branch starts a new direction for the project: a compact 3D isometric actio
 - Low-resolution 3D presentation with nearest-neighbor scaling.
 - One enclosed dungeon room with tile floor, stone walls, pillars and warm torches.
 - Left-click movement and enemy targeting with automatic close-range attacks; right-click area skill; keyboard dash and optional WASD movement.
-- Six pursuing skeleton enemies with contact damage.
+- Six pursuing skeleton enemies with contact damage, hit reactions, knockback and delayed defeat animations.
 - Gold drops that can be collected.
 - Health, gold and clear-progress HUD; victory/defeat and restart.
 
@@ -17,6 +17,8 @@ This branch starts a new direction for the project: a compact 3D isometric actio
 - Right mouse — area attack
 - Melee hits — short sword swing and brief impact ring
 - Area attack — expanding teal ring with per-target impact flashes
+- Enemy hit reaction — brief squash/punch and knockback
+- Enemy defeat — short fall-and-shrink animation before the gold drop appears
 - Q or Space — dash (brief invulnerability)
 - E — area attack (keyboard alternative)
 - WASD — optional direct movement
