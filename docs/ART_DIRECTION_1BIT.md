@@ -7,11 +7,13 @@
 
 ## Display and pixel rules
 - Logical viewport: 640×360, rendered with viewport stretch and integer scaling.
+- Startup display: fullscreen (`window/size/mode=3`); fullscreen changes the physical presentation size only. The game canvas and all UI/gameplay coordinates remain 640×360. Integer scaling preserves hard pixels; unused screen area becomes letterbox bars when the display aspect ratio is not an exact integer multiple.
 - Nearest filtering for every pixel-art texture; pixel snapping on transforms and vertices.
 - All sprite silhouettes align to an integer pixel grid. Use hard edges / shape-rendering="crispEdges"; no antialiasing or vector gradients.
 - Texture atlas / source sprite pixel density should be authored for final logical size, not oversized 1920px UI textures.
 - 1-bit palette: ink #000000, paper #FFFFFF. Dither patterns use explicit 2×2 / 4×4 / 6×6 binary patterns, not transparency gradients.
-- UI uses 1px and 2px borders, square corners, notches, stepped corners, sparse checker or ordered-dither fields. No wood grain, metallic bevels, realistic material rendering, glow or glossy effects.
+- UI uses 1px and 2px borders, square corners, notches, stepped corners, restrained symmetric corner ornaments inspired by engraved card frames, and sparse checker or ordered-dither fields.
+- Frame hierarchy: double-line / stepped outer frame for important panels; small corner flourishes on cards and modal panels; buttons stay simpler so they remain readable at 640×360. Avoid dense filigree and tiny decorative text. No wood grain, metallic bevels, realistic material rendering, glow or glossy effects.
 - Icons are 16–32px block silhouettes with no more than 2–3 interior cutouts. Each category uses a distinct silhouette, not color.
 
 ## Composition
