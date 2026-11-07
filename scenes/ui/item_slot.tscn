@@ -1,0 +1,65 @@
+[gd_scene load_steps=3 format=3]
+
+[sub_resource type="StyleBoxFlat" id="SlotStyle"]
+bg_color = Color(0.075, 0.082, 0.09, 1)
+border_color = Color(0.39, 0.34, 0.27, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="IconStyle"]
+bg_color = Color(0.13, 0.14, 0.15, 1)
+border_color = Color(0.57, 0.46, 0.31, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+
+[node name="ItemSlot" type="PanelContainer"]
+custom_minimum_size = Vector2(62, 62)
+theme_override_styles/panel = SubResource("SlotStyle")
+
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 1
+
+[node name="Icon" type="PanelContainer" parent="Content"]
+custom_minimum_size = Vector2(0, 37)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("IconStyle")
+
+[node name="IconLabel" type="Label" parent="Content/Icon"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.83, 0.69, 0.46, 1)
+theme_override_font_sizes/font_size = 19
+text = "·"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Name" type="Label" parent="Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.86, 0.76, 1)
+theme_override_font_sizes/font_size = 8
+text = ""
+horizontal_alignment = 1
+clip_text = true
+
+[node name="Count" type="Label" parent="."]
+offset_left = 36.0
+offset_top = 2.0
+offset_right = 59.0
+offset_bottom = 15.0
+theme_override_colors/font_color = Color(0.95, 0.82, 0.58, 1)
+theme_override_font_sizes/font_size = 9
+text = ""
+horizontal_alignment = 2
