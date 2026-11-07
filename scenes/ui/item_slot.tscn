@@ -25,7 +25,7 @@ corner_radius_bottom_right = 24
 corner_radius_bottom_left = 24
 
 [node name="ItemSlot" type="PanelContainer"]
-custom_minimum_size = Vector2(62, 62)
+custom_minimum_size = Vector2(58, 58)
 theme_override_styles/panel = SubResource("SlotStyle")
 
 [node name="Content" type="VBoxContainer" parent="."]
@@ -33,7 +33,7 @@ layout_mode = 2
 theme_override_constants/separation = 1
 
 [node name="Icon" type="PanelContainer" parent="Content"]
-custom_minimum_size = Vector2(0, 37)
+custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_styles/panel = SubResource("IconStyle")
