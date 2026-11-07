@@ -15,6 +15,8 @@ This branch starts a new direction for the project: a compact 3D isometric actio
 - Left mouse on the ground — move to the clicked point (with a destination marker)
 - Left mouse on an enemy — approach and attack automatically (with a target ring)
 - Right mouse — area attack
+- Melee hits — short sword swing and brief impact ring
+- Area attack — expanding teal ring with per-target impact flashes
 - Q or Space — dash (brief invulnerability)
 - E — area attack (keyboard alternative)
 - WASD — optional direct movement
