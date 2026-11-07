@@ -7,19 +7,19 @@ const HEADER_HEIGHT := 54.0
 const STATUS_HEIGHT := 24.0
 const BOARD_MARGIN := 14.0
 
-const BG := Color("#111316")
-const BOARD_BG := Color("#202328")
-const CARD_BG := Color("#292b30")
-const CARD_BORDER := Color("#b89a68")
-const INK := Color("#eee2c9")
-const MUTED := Color("#aaa18f")
-const ACCENT := Color("#d5aa68")
-const LINK_COLOR := Color("#e0b978")
-const MATERIAL_COLOR := Color("#7894a2")
-const TOOL_COLOR := Color("#b18a5c")
-const OPERATION_COLOR := Color("#a96f55")
-const OBJECT_COLOR := Color("#829078")
-const PRODUCT_COLOR := Color("#c4a15d")
+const BG := Color("#000000")
+const BOARD_BG := Color("#080808")
+const CARD_BG := Color("#111111")
+const CARD_BORDER := Color("#ffffff")
+const INK := Color("#ffffff")
+const MUTED := Color("#ffffff")
+const ACCENT := Color("#ffffff")
+const LINK_COLOR := Color("#ffffff")
+const MATERIAL_COLOR := Color("#ffffff")
+const TOOL_COLOR := Color("#ffffff")
+const OPERATION_COLOR := Color("#ffffff")
+const OBJECT_COLOR := Color("#ffffff")
+const PRODUCT_COLOR := Color("#ffffff")
 const SAVE_PATH := "user://kuznya_save.json"
 const IRON_PACK_SIZE := 2
 const COAL_PACK_SIZE := 5
@@ -55,6 +55,8 @@ var connecting_from_port := -1
 var action_button_held := false
 var execution_message := "Производство: собери схему и нажми «Выполнить»."
 var mouse_position := Vector2.ZERO
+var card_motion_tweens: Dictionary = {}
+var card_motion_targets: Dictionary = {}
 @onready var market_layer: Control = $MarketLayer
 @onready var card_views: Control = $CardViews
 @onready var modal_layer: Control = $ModalLayer
@@ -1040,16 +1042,34 @@ func _sync_card_views() -> void:
 					break
 		if card_id == drag_card_id:
 			target = drag_position
+			var active_tween: Tween = card_motion_tweens.get(card_id)
+			if active_tween != null and active_tween.is_running():
+				active_tween.kill()
+			card_motion_targets[card_id] = target
+			view.position = target
 			view.z_index = 50
 		else:
 			view.z_index = 2
-		view.position = target
+			if not card_motion_targets.has(card_id):
+				view.position = target
+				card_motion_targets[card_id] = target
+			elif Vector2(card_motion_targets[card_id]).distance_to(target) > 0.5:
+				var previous_tween: Tween = card_motion_tweens.get(card_id)
+				if previous_tween != null and previous_tween.is_running():
+					previous_tween.kill()
+				card_motion_targets[card_id] = target
+				var move_tween := create_tween()
+				card_motion_tweens[card_id] = move_tween
+				move_tween.tween_property(view, "position", target, 0.16).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		view.size = CARD_SIZE
 		view.call("set_card_data", card, on_board, _input_ports(card), _output_ports(card))
 	for child in card_views.get_children():
 		if child is Control and str(child.name).begins_with("Card_"):
 			var id_text := str(child.name).trim_prefix("Card_")
 			if not visible_ids.has(int(id_text)):
+				var removed_id := int(id_text)
+				card_motion_targets.erase(removed_id)
+				card_motion_tweens.erase(removed_id)
 				child.queue_free()
 
 
