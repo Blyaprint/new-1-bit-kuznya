@@ -23,19 +23,96 @@ class DropZone extends HBoxContainer:
 		controller.call("_handle_drop", zone_id, data, target_index)
 
 
-class DragCard extends Button:
+class CardFace extends Control:
+	const INK := Color("#000000")
+	const PAPER := Color("#FFFFFF")
 	var controller: Control
 	var card_index := -1
 	var card_data: Dictionary = {}
 	var drop_zone: DropZone
+	var compact := false
+	var preview_mode := false
+	var hovered := false
+
+	func configure(data: Dictionary, owner: Control, index: int, zone: DropZone, small := false) -> void:
+		card_data = data
+		controller = owner
+		card_index = index
+		drop_zone = zone
+		compact = small
+		mouse_filter = Control.MOUSE_FILTER_IGNORE if small else Control.MOUSE_FILTER_STOP
+		custom_minimum_size = Vector2(62, 72) if small else Vector2(92, 112)
+		mouse_entered.connect(_on_mouse_entered)
+		mouse_exited.connect(_on_mouse_exited)
+		queue_redraw()
+
+	func _on_mouse_entered() -> void:
+		hovered = true
+		queue_redraw()
+
+	func _on_mouse_exited() -> void:
+		hovered = false
+		queue_redraw()
+
+	func _draw() -> void:
+		var lift := -3.0 if hovered and not preview_mode else 0.0
+		if compact:
+			draw_rect(Rect2(Vector2(2, 3), size - Vector2(4, 4)), INK)
+			draw_rect(Rect2(Vector2(1, 1), size - Vector2(4, 4)), PAPER)
+			draw_rect(Rect2(Vector2(1, 1), size - Vector2(4, 4)), INK, false, 2)
+			draw_string(ThemeDB.fallback_font, Vector2(5, 17), str(card_data.get("name", "КАРТА")).substr(0, 9), HORIZONTAL_ALIGNMENT_CENTER, size.x - 8, 8, INK)
+			_draw_symbol(Rect2(9, 23, size.x - 18, 28), str(card_data.get("effect", "creature")))
+			draw_rect(Rect2(size.x - 22, size.y - 23, 18, 18), INK)
+			draw_string(ThemeDB.fallback_font, Vector2(size.x - 19, size.y - 10), str(card_data.get("power", 0)), HORIZONTAL_ALIGNMENT_CENTER, 14, 10, PAPER)
+			return
+		draw_rect(Rect2(Vector2(5, 6), size - Vector2(8, 8)), INK)
+		draw_rect(Rect2(Vector2(1, lift + 1), size - Vector2(8, 8)), PAPER)
+		draw_rect(Rect2(Vector2(1, lift + 1), size - Vector2(8, 8)), INK, false, 3 if preview_mode else 2)
+		draw_rect(Rect2(Vector2(5, lift + 5), size - Vector2(16, 16)), INK, false, 1)
+		draw_rect(Rect2(Vector2(7, lift + 7), Vector2(size.x - 20, 18)), INK)
+		draw_string(ThemeDB.fallback_font, Vector2(10, lift + 20), str(card_data.get("name", "КАРТА")).substr(0, 13), HORIZONTAL_ALIGNMENT_LEFT, size.x - 24, 9, PAPER)
+		var art_rect := Rect2(Vector2(8, lift + 29), Vector2(size.x - 22, 49))
+		draw_rect(art_rect, PAPER)
+		draw_rect(art_rect, INK, false, 2)
+		_draw_symbol(Rect2(art_rect.position + Vector2(8, 5), art_rect.size - Vector2(16, 10)), str(card_data.get("effect", "creature")))
+		draw_string(ThemeDB.fallback_font, Vector2(10, lift + 91), str(card_data.get("kind", "КАРТА")), HORIZONTAL_ALIGNMENT_LEFT, size.x - 32, 7, INK)
+		draw_rect(Rect2(size.x - 29, lift + size.y - 29, 23, 23), INK)
+		draw_rect(Rect2(size.x - 27, lift + size.y - 27, 19, 19), PAPER, false, 1)
+		draw_string(ThemeDB.fallback_font, Vector2(size.x - 25, lift + size.y - 11), str(card_data.get("power", 0)), HORIZONTAL_ALIGNMENT_CENTER, 15, 11, INK)
+		if hovered and not preview_mode:
+			draw_rect(Rect2(Vector2(0, lift), size - Vector2(7, 7)), INK, false, 1)
+
+	func _draw_symbol(area: Rect2, effect: String) -> void:
+		var cx := area.position.x + area.size.x * 0.5
+		var cy := area.position.y + area.size.y * 0.5
+		match effect:
+			"curse":
+				draw_arc(Vector2(cx, cy), minf(area.size.x, area.size.y) * 0.34, 0.0, TAU * 0.86, 18, INK, 2.0)
+				draw_line(Vector2(cx - 7, cy + 5), Vector2(cx + 8, cy - 7), INK, 2.0)
+				draw_circle(Vector2(cx + 8, cy - 7), 3.0, INK)
+			"trap":
+				draw_line(Vector2(area.position.x + 5, area.end.y - 5), Vector2(cx, area.position.y + 4), INK, 3.0)
+				draw_line(Vector2(cx, area.position.y + 4), Vector2(area.end.x - 5, area.end.y - 5), INK, 3.0)
+				draw_rect(Rect2(cx - 3, cy - 3, 6, 6), INK)
+			"relic":
+				draw_rect(Rect2(cx - 8, cy - 10, 16, 20), INK)
+				draw_rect(Rect2(cx - 4, cy - 6, 8, 12), PAPER)
+				draw_rect(Rect2(cx - 2, cy - 4, 4, 8), INK)
+			_:
+				draw_circle(Vector2(cx, cy - 7), 7, INK)
+				draw_rect(Rect2(cx - 10, cy + 1, 20, 16), INK)
+				draw_rect(Rect2(cx - 4, cy + 4, 8, 8), PAPER)
 
 	func _get_drag_data(_at_position: Vector2) -> Variant:
-		if controller == null:
+		if controller == null or compact:
 			return null
-		var preview := Label.new()
-		preview.text = text
-		preview.add_theme_font_size_override("font_size", 10)
-		preview.add_theme_color_override("font_color", Color.BLACK)
+		var preview := CardFace.new()
+		preview.card_data = card_data.duplicate(true)
+		preview.preview_mode = true
+		preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		preview.custom_minimum_size = Vector2(124, 158)
+		preview.size = Vector2(124, 158)
+		preview.queue_redraw()
 		set_drag_preview(preview)
 		return controller.call("_build_drag_payload", card_index)
 
@@ -45,7 +122,6 @@ class DragCard extends Button:
 	func _drop_data(_at_position: Vector2, data: Variant) -> void:
 		if drop_zone != null and controller != null:
 			controller.call("_handle_drop", drop_zone.zone_id, data, card_index)
-
 
 var turn_number := 1
 var player_turn := true
