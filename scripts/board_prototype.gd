@@ -1,6 +1,7 @@
 extends Control
 
 const CARD_SIZE := Vector2(140, 164)
+const CARD_VIEW_SCENE := preload("res://scenes/ui/card_view.tscn")
 const HAND_HEIGHT := 178.0
 const HEADER_HEIGHT := 64.0
 const STATUS_HEIGHT := 54.0
@@ -56,6 +57,7 @@ var execution_message := "Производство: собери схему и �
 var mouse_position := Vector2.ZERO
 var font: Font
 @onready var market_layer: Control = $MarketLayer
+@onready var card_views: Control = $CardViews
 
 
 func _ready() -> void:
@@ -109,6 +111,8 @@ func _set_active_links(value: Array[String]) -> void:
 
 
 func _process(_delta: float) -> void:
+	_sync_card_views()
+	_sync_header_captions()
 	if market_layer.visible != market_open:
 		market_layer.visible = market_open
 		if market_open:
@@ -965,6 +969,52 @@ func _filter_links_for_ids(graph_links: Array[String], ids: Array) -> Array[Stri
 	return kept
 
 
+func _sync_card_views() -> void:
+	if not is_instance_valid(card_views):
+		return
+	var visible_ids: Array[int] = []
+	for card in cards:
+		var card_id := int(card.id)
+		visible_ids.append(card_id)
+		var view_name := "Card_%d" % card_id
+		var view := card_views.get_node_or_null(view_name) as Control
+		if view == null:
+			view = CARD_VIEW_SCENE.instantiate() as Control
+			view.name = view_name
+			card_views.add_child(view)
+		var on_board := str(card.get(_place_key(), "hand")) == "board"
+		var target := Vector2(card.get(_position_key(), Vector2.ZERO)) - CARD_SIZE * 0.5 if on_board else Vector2.ZERO
+		if not on_board:
+			var hand := _hand_cards()
+			for i in range(hand.size()):
+				if int(hand[i].id) == card_id:
+					target = _hand_card_rect(i, hand.size()).position
+					break
+		if card_id == drag_card_id:
+			target = drag_position
+			view.z_index = 50
+		else:
+			view.z_index = 2
+		view.position = target
+		view.size = CARD_SIZE
+		view.set_card_data(card, on_board)
+	for child in card_views.get_children():
+		if child is Control and str(child.name).begins_with("Card_"):
+			var id_text := str(child.name).trim_prefix("Card_")
+			if not visible_ids.has(int(id_text)):
+				child.queue_free()
+
+
+func _sync_header_captions() -> void:
+	$HeaderButtons/RecipeButton.set_caption("РЕЦЕПТ: %s" % selected_recipe.to_upper())
+	$HeaderButtons/NewGameButton.set_caption("НОВАЯ ИГРА")
+	$HeaderButtons/MarketButton.set_caption("ТОРГОВЕЦ")
+	$HeaderButtons/ProductionButton.set_caption("ПРОИЗВОДСТВО")
+	$HeaderButtons/ResearchButton.set_caption("ИССЛЕДОВАНИЕ")
+	$HeaderButtons/JournalButton.set_caption("ЖУРНАЛ")
+	$HeaderButtons/ActionButton.set_caption("ВЫПОЛНИТЬ" if mode == "production" else "ИСПЫТАТЬ")
+
+
 func _draw() -> void:
 	# Leave the HUD and hand-tray bands transparent so their imported textures remain visible.
 	draw_rect(Rect2(0, HEADER_HEIGHT, size.x, size.y - HEADER_HEIGHT - HAND_HEIGHT), BG)
@@ -1053,18 +1103,8 @@ func _draw_graph_legend() -> void:
 	draw_string(font, Vector2(x + 202, y + 4), "НАПРАВЛЕНИЕ", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
 
 
-func _draw_header_button(rect: Rect2, label: String, active: bool) -> void:
-	var fill := Color("#57432b") if active else Color("#242321")
-	var edge := Color("#e0bd80") if active else Color("#77664e")
-	draw_rect(Rect2(rect.position + Vector2(3, 4), rect.size), Color("#070809", 0.82))
-	draw_rect(rect, Color("#0e0d0b"))
-	draw_rect(Rect2(rect.position + Vector2(2, 2), rect.size - Vector2(4, 4)), fill)
-	draw_rect(Rect2(rect.position + Vector2(5, 5), rect.size - Vector2(10, 10)), Color("#30271e") if active else Color("#292725"), false, 1.0)
-	draw_rect(rect, edge, false, 1.5)
-	draw_line(rect.position + Vector2(7, 3), rect.position + Vector2(rect.size.x - 7, 3), Color("#f4d8a5", 0.48), 1.0)
-	draw_line(rect.position + Vector2(7, rect.size.y - 4), rect.position + Vector2(rect.size.x - 7, rect.size.y - 4), Color("#090807", 0.7), 1.0)
-	_draw_header_icon(Rect2(rect.position + Vector2(7, 8), Vector2(22, 22)), label, edge)
-	draw_string(font, rect.position + Vector2(30, 25), label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 34, 9, Color("#f2e5ca") if active else Color("#c8bda8"))
+func _draw_header_button(_rect: Rect2, _label: String, _active: bool) -> void:
+	pass
 
 
 func _draw_header_icon(rect: Rect2, label: String, tint: Color) -> void:
@@ -1146,51 +1186,9 @@ func _draw_hand() -> void:
 		_draw_card(hand[i], _hand_card_rect(i, hand.size()).position, false)
 
 
-func _draw_card(card: Dictionary, top_left: Vector2, on_board := false) -> void:
-	var rect := Rect2(top_left, CARD_SIZE)
-	var role_color := _category_color(str(card.category))
-	# Layered dark-metal frame with a warm inset, like a premium RPG item card.
-	draw_rect(Rect2(top_left + Vector2(5, 6), CARD_SIZE), Color("#08090b", 0.82))
-	draw_rect(rect, Color("#17191d"))
-	draw_rect(rect, Color("#8e754f"), false, 2.0)
-	draw_rect(Rect2(top_left + Vector2(4, 4), CARD_SIZE - Vector2(8, 8)), CARD_BG)
-	draw_rect(Rect2(top_left + Vector2(6, 6), CARD_SIZE - Vector2(12, 12)), Color("#292b30"))
-	draw_rect(Rect2(top_left + Vector2(7, 7), Vector2(CARD_SIZE.x - 14, 28)), Color("#38332c"))
-	draw_rect(Rect2(top_left + Vector2(7, 7), Vector2(4, 28)), role_color)
-	draw_string(font, top_left + Vector2(16, 25), _category_label(str(card.category)), HORIZONTAL_ALIGNMENT_LEFT, CARD_SIZE.x - 28, 9, Color("#d9c7a5"))
-	# Emblem medallion.
-	draw_circle(top_left + Vector2(CARD_SIZE.x * 0.5, 78), 29.0, Color("#111316"))
-	draw_arc(top_left + Vector2(CARD_SIZE.x * 0.5, 78), 28.0, 0.0, TAU, 48, Color("#9d8258"), 2.0)
-	_draw_card_emblem(str(card.category), top_left + Vector2(CARD_SIZE.x * 0.5, 78), role_color)
-	draw_string(font, top_left + Vector2(8, 126), str(card.title), HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 14, Color("#f0e4cd"))
-	if int(card.get("quantity", 1)) > 1:
-		draw_rect(Rect2(top_left + Vector2(CARD_SIZE.x - 43, 38), Vector2(34, 20)), Color("#17191d"))
-		draw_string(font, top_left + Vector2(CARD_SIZE.x - 41, 53), "×%d" % int(card.quantity), HORIZONTAL_ALIGNMENT_CENTER, 30, 11, Color("#f2d59d"))
-	if str(card.title) in ["Молот", "Горн"]:
-		var max_dur := maxf(1.0, float(card.get("max_durability", TOOL_MAX_DURABILITY)))
-		var wear_ratio := 1.0 - clampf(float(card.get("durability", TOOL_MAX_DURABILITY)) / max_dur, 0.0, 1.0)
-		var bar_rect := Rect2(top_left + Vector2(CARD_SIZE.x - 13, 65), Vector2(4, 52))
-		draw_rect(bar_rect, Color("#55534d"))
-		if wear_ratio > 0.0:
-			var red_height := bar_rect.size.y * wear_ratio
-			draw_rect(Rect2(bar_rect.position.x, bar_rect.end.y - red_height, bar_rect.size.x, red_height), Color("#bd5549"))
-	draw_line(top_left + Vector2(13, 136), top_left + Vector2(CARD_SIZE.x - 13, 136), Color("#74664f"), 1.0)
-	draw_string(font, top_left + Vector2(8, 153), "УЗЕЛ СХЕМЫ" if on_board else "В ИНВЕНТАРЕ", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 8, Color("#b6a587"))
-	if on_board:
-		var inputs := _input_ports(card)
-		var outputs := _output_ports(card)
-		for i in range(inputs.size()):
-			var p := _port_position(card, false, i)
-			draw_circle(p, 7.0, Color("#18211f"))
-			draw_circle(p, 4.0, Color("#8fb9a2"))
-			var label_pos := Vector2(top_left.x + 8, p.y + 3)
-			draw_string(font, label_pos, str(inputs[i].label), HORIZONTAL_ALIGNMENT_LEFT, 46, 7, Color("#d4e1d6"))
-		for i in range(outputs.size()):
-			var p := _port_position(card, true, i)
-			draw_circle(p, 7.0, Color("#2a2117"))
-			draw_circle(p, 4.0, ACCENT)
-			var label_pos := Vector2(top_left.x + CARD_SIZE.x - 54, p.y + 3)
-			draw_string(font, label_pos, str(outputs[i].label), HORIZONTAL_ALIGNMENT_RIGHT, 46, 7, Color("#f0d8ad"))
+func _draw_card(_card: Dictionary, _top_left: Vector2, _on_board := false) -> void:
+	# Cards are rendered by reusable CardView scene instances.
+	pass
 
 
 func _category_color(category: String) -> Color:
