@@ -74,7 +74,7 @@ var enemy_deck: Array[Dictionary] = [
 ]
 var active_effects: Array[String] = ["ТУМАН"]
 var trap_armed := false
-var status_text := "ВЫБЕРИ КАРТУ В РУКЕ, ЧТОБЫ СЫГРАТЬ ЕЁ"
+var status_text := "ПЕРЕТАЩИ КАРТУ ИЗ РУКИ В НУЖНУЮ ЗОНУ"
 
 var top_bar: HBoxContainer
 var battlefield: VBoxContainer
@@ -166,15 +166,20 @@ func _refresh_battlefield() -> void:
 	var effect_title := _label("ЭФФЕКТЫ ПОЛЯ", BLACK, 9)
 	effect_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	middle.add_child(effect_title)
-	effects_row = HBoxContainer.new()
+	effects_row = DropZone.new()
+	effects_row.controller = self
+	effects_row.zone_id = "effects"
 	effects_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	effects_row.add_theme_constant_override("separation", 8)
+	effects_row.custom_minimum_size.y = 24
 	for effect in active_effects:
 		effects_row.add_child(_tag(effect))
 	if trap_armed:
 		effects_row.add_child(_tag("ЛОВУШКА ГОТОВА"))
 	if effects_row.get_child_count() == 0:
-		effects_row.add_child(_label("НЕТ АКТИВНЫХ ЭФФЕКТОВ", BLACK, 9))
+		var empty_effects := _label("ПЕРЕТАЩИ СЮДА КАРТУ ЭФФЕКТА", BLACK, 9)
+		empty_effects.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		effects_row.add_child(empty_effects)
 	middle.add_child(effects_row)
 	message_label = _label(status_text, BLACK, 9)
 	message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -198,21 +203,32 @@ func _make_side_section(title: String, score: int, cards: Array[Dictionary], opp
 	header.add_child(score_label)
 	section.add_child(header)
 
-	var row := HBoxContainer.new()
+	var row: HBoxContainer
+	if opponent:
+		row = HBoxContainer.new()
+	else:
+		var player_drop_zone := DropZone.new()
+		player_drop_zone.controller = self
+		player_drop_zone.zone_id = "player_field"
+		row = player_drop_zone
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 7)
 	for data in cards:
 		row.add_child(_field_card(data))
 	if cards.is_empty():
-		row.add_child(_label("ПОЛЕ ПУСТО", WHITE, 9))
+		var empty_field := _label("ПЕРЕТАЩИ СЮДА СУЩЕСТВО" if not opponent else "ПОЛЕ ПУСТО", WHITE, 9)
+		empty_field.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(empty_field)
 	section.add_child(row)
 	return section
 
 func _field_card(data: Dictionary) -> Control:
 	var panel := PanelContainer.new()
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.custom_minimum_size = Vector2(62, 65)
 	_style_panel(panel, WHITE, BLACK)
 	var box := VBoxContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	var glyph := _label("◆", BLACK, 18)
 	glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -229,21 +245,87 @@ func _field_card(data: Dictionary) -> Control:
 func _refresh_hand() -> void:
 	for child in hand_panel.get_children():
 		child.queue_free()
-	var header := _label("ТВОЯ РУКА  •  НАЖМИ НА КАРТУ, ЧТОБЫ СЫГРАТЬ", WHITE, 9)
+	var header := _label("ТВОЯ РУКА  •  ПЕРЕТАЩИ КАРТУ НА ПОЛЕ ИЛИ В ЗОНУ ЭФФЕКТОВ", WHITE, 9)
 	hand_panel.add_child(header)
-	hand_row = HBoxContainer.new()
+	var hand_drop_zone := DropZone.new()
+	hand_drop_zone.controller = self
+	hand_drop_zone.zone_id = "hand"
+	hand_row = hand_drop_zone
 	hand_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	hand_row.add_theme_constant_override("separation", 5)
 	for i in range(hand_cards.size()):
 		var data: Dictionary = hand_cards[i]
-		var card := _button("%s\n%s\n%s" % [data.name, data.kind, str(data.power) if data.power > 0 else "ЭФФЕКТ"], 82)
-		card.custom_minimum_size.y = 48
+		var card := DragCard.new()
+		card.controller = self
+		card.card_index = i
+		card.card_data = data
+		card.drop_zone = hand_drop_zone
+		card.text = "%s\n%s\n%s" % [data.name, data.kind, str(data.power) if data.power > 0 else "ЭФФЕКТ"]
+		card.custom_minimum_size = Vector2(82, 48)
 		card.add_theme_font_size_override("font_size", 9)
-		card.pressed.connect(_play_card.bind(i))
+		card.tooltip_text = "Зажми и перетащи на нужную зону"
+		_style_drag_card(card)
 		hand_row.add_child(card)
 	if hand_cards.is_empty():
-		hand_row.add_child(_label("КАРТ В РУКЕ НЕТ", WHITE, 9))
+		var no_cards := _label("КАРТ В РУКЕ НЕТ", WHITE, 9)
+		no_cards.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hand_row.add_child(no_cards)
 	hand_panel.add_child(hand_row)
+
+func _style_drag_card(card: Button) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = WHITE
+	normal.border_color = WHITE
+	normal.set_border_width_all(1)
+	var hover := StyleBoxFlat.new()
+	hover.bg_color = Color("#D8D8D8")
+	hover.border_color = WHITE
+	hover.set_border_width_all(2)
+	card.add_theme_stylebox_override("normal", normal)
+	card.add_theme_stylebox_override("hover", hover)
+	card.add_theme_stylebox_override("pressed", hover)
+	card.add_theme_color_override("font_color", BLACK)
+	card.add_theme_color_override("font_hover_color", BLACK)
+	card.add_theme_color_override("font_pressed_color", BLACK)
+
+func _build_drag_payload(index: int) -> Dictionary:
+	return {"type": "hand_card", "index": index}
+
+func _can_accept_drop(zone_id: String, payload: Variant) -> bool:
+	if not player_turn or not (payload is Dictionary):
+		return false
+	if str(payload.get("type", "")) != "hand_card":
+		return false
+	var index := int(payload.get("index", -1))
+	if index < 0 or index >= hand_cards.size():
+		return false
+	if zone_id == "hand":
+		return true
+	var data: Dictionary = hand_cards[index]
+	var effect := str(data.get("effect", ""))
+	if zone_id == "player_field":
+		return effect == "creature" and player_cards.size() < 5
+	if zone_id == "effects":
+		return effect in ["curse", "trap", "relic"]
+	return false
+
+func _handle_drop(zone_id: String, payload: Variant, target_index: int = -1) -> void:
+	if not _can_accept_drop(zone_id, payload):
+		status_text = "ЭТУ КАРТУ НЕЛЬЗЯ СЮДА ПОЛОЖИТЬ"
+		_refresh()
+		return
+	var source_index := int(payload.get("index", -1))
+	if zone_id == "hand":
+		if target_index < 0:
+			target_index = hand_cards.size() - 1
+		var moved: Dictionary = hand_cards.pop_at(source_index)
+		if source_index < target_index:
+			target_index -= 1
+		hand_cards.insert(clampi(target_index, 0, hand_cards.size()), moved)
+		status_text = "ПОРЯДОК КАРТ В РУКЕ ИЗМЕНЁН"
+		_refresh()
+		return
+	_play_card(source_index)
 
 func _play_card(index: int) -> void:
 	if not player_turn or index < 0 or index >= hand_cards.size():
