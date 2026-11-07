@@ -229,7 +229,7 @@ visible = false
 
 [node name="Line" type="Line2D" parent="ConnectionPreview"]
 width = 4.0
-default_color = Color(0.84, 0.67, 0.41, 1)
+default_color = Color(1, 1, 1, 1)
 antialiased = true
 
 [node name="GraphLegend" type="Control" parent="."]
