@@ -84,7 +84,7 @@ var player_score_label: Label
 var enemy_score_label: Label
 var player_cards_row: HBoxContainer
 var enemy_cards_row: HBoxContainer
-var effects_row: HBoxContainer
+var effects_row: DropZone
 var hand_row: HBoxContainer
 var turn_label: Label
 var end_turn_button: Button
