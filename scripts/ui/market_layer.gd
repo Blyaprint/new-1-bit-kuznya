@@ -2,8 +2,70 @@ extends Control
 
 const SLOT_COUNT := 20
 
+signal trade_requested(source: String, title: String, target: String)
+signal close_requested
+
+var drag_source := ""
+var drag_title := ""
+
 @onready var inventory_window: Control = $InventoryWindow
 @onready var merchant_window: Control = $MerchantWindow
+
+
+func _ready() -> void:
+	_set_mouse_passthrough(self)
+	$Backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$MerchantWindow/Margin/Layout/CloseButton.pressed.connect(func() -> void:
+		close_requested.emit()
+	)
+
+
+func _set_mouse_passthrough(node: Node) -> void:
+	for child in node.get_children():
+		if child is Control:
+			child.mouse_filter = Control.MOUSE_FILTER_PASS
+		_set_mouse_passthrough(child)
+
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		var point := get_global_mouse_position()
+		if event.pressed:
+			drag_source = ""
+			drag_title = ""
+			var player_title := _title_at(inventory_window, point)
+			var merchant_title := _title_at(merchant_window, point)
+			if player_title != "":
+				drag_source = "player"
+				drag_title = player_title
+			elif merchant_title != "":
+				drag_source = "merchant"
+				drag_title = merchant_title
+			accept_event()
+		else:
+			if drag_source != "":
+				var target := ""
+				if drag_source == "player" and merchant_window.get_global_rect().has_point(point):
+					target = "merchant"
+				elif drag_source == "merchant" and inventory_window.get_global_rect().has_point(point):
+					target = "player"
+				if target != "":
+					trade_requested.emit(drag_source, drag_title, target)
+			drag_source = ""
+			drag_title = ""
+			accept_event()
+	elif event is InputEventMouseMotion and drag_source != "":
+		accept_event()
+
+
+func _title_at(window: Control, point: Vector2) -> String:
+	var grid: GridContainer = window.get_node("Margin/Layout/Grid")
+	for slot in grid.get_children():
+		if slot is Control and slot.get_global_rect().has_point(point):
+			var title := str(slot.get_node("Content/Name").text)
+			if title != "":
+				return title
+	return ""
 
 
 func set_market_data(player_items: Array, merchant_titles: Array, trader_stock: Dictionary, money: int) -> void:
