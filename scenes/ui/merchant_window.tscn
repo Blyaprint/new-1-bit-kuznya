@@ -3,8 +3,8 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/item_slot.tscn" id="1"]
 
 [sub_resource type="StyleBoxFlat" id="WindowStyle"]
-bg_color = Color(0.09, 0.10, 0.11, 0.98)
-border_color = Color(0.61, 0.50, 0.33, 1)
+bg_color = Color(0, 0, 0, 1)
+border_color = Color(1, 1, 1, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
