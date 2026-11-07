@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/board_prototype.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/ui/market_layer.tscn" id="2"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/header_button.tscn" id="5"]
 [ext_resource type="Texture2D" path="res://assets/ui/board_surface.svg" id="6"]
 [ext_resource type="Texture2D" path="res://assets/ui/status_strip.svg" id="7"]
+[ext_resource type="PackedScene" path="res://scenes/ui/modal_layer.tscn" id="8"]
 
 [node name="BoardPrototype" type="Control"]
 layout_mode = 3
@@ -210,3 +211,6 @@ offset_bottom = -4.0
 theme_override_colors/font_color = Color(0.67, 0.63, 0.56, 1)
 theme_override_font_sizes/font_size = 9
 mouse_filter = 2
+
+[node name="ModalLayer" parent="." instance=ExtResource("8")]
+z_index = 20
