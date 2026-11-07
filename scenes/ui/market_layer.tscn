@@ -1,8 +1,19 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/ui/inventory_window.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/ui/merchant_window.tscn" id="2"]
 [ext_resource type="Script" path="res://scripts/ui/market_layer.gd" id="3"]
+
+[sub_resource type="StyleBoxFlat" id="MarketFrameStyle"]
+bg_color = Color(0, 0, 0, 1)
+border_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+
+[sub_resource type="StyleBoxFlat" id="PaneStyle"]
+bg_color = Color(0, 0, 0, 1)
 
 [node name="MarketLayer" type="Control"]
 z_index = 100
@@ -26,6 +37,34 @@ grow_vertical = 2
 color = Color(0, 0, 0, 1)
 mouse_filter = 2
 
+[node name="MarketFrame" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -316.0
+offset_top = -164.0
+offset_right = 316.0
+offset_bottom = 164.0
+theme_override_styles/panel = SubResource("MarketFrameStyle")
+mouse_filter = 2
+
+[node name="CenterDivider" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -1.0
+offset_top = -148.0
+offset_right = 1.0
+offset_bottom = 148.0
+color = Color(1, 1, 1, 1)
+mouse_filter = 2
+
 [node name="InventoryWindow" parent="." instance=ExtResource("1")]
 anchor_left = 0.5
 anchor_top = 0.5
@@ -35,6 +74,7 @@ offset_left = -312.0
 offset_top = -160.0
 offset_right = -8.0
 offset_bottom = 160.0
+theme_override_styles/panel = SubResource("PaneStyle")
 
 [node name="MerchantWindow" parent="." instance=ExtResource("2")]
 anchor_left = 0.5
@@ -45,3 +85,4 @@ offset_left = 8.0
 offset_top = -160.0
 offset_right = 312.0
 offset_bottom = 160.0
+theme_override_styles/panel = SubResource("PaneStyle")
