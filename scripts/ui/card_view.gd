@@ -20,6 +20,8 @@ func set_card_data(data: Dictionary, on_board: bool, input_ports: Array = [], ou
 	quantity_label.text = "×%d" % quantity if quantity > 1 else ""
 	state_label.text = "УЗЕЛ СХЕМЫ" if on_board else "В ИНВЕНТАРЕ"
 	$InputPort0.visible = on_board and input_ports.size() > 0
+	$InputPort0.position.y = 74.0 if input_ports.size() == 1 else 55.0
+	$InputLabel0.position.y = 76.0 if input_ports.size() == 1 else 57.0
 	$InputLabel0.visible = on_board and input_ports.size() > 0
 	$InputPort1.visible = on_board and input_ports.size() > 1
 	$InputLabel1.visible = on_board and input_ports.size() > 1
