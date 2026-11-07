@@ -432,7 +432,7 @@ func _build_enemies() -> void:
 		selection_ring.position.y = -0.43
 		selection_ring.visible = false
 		enemy.add_child(selection_ring)
-		enemies.append({"node": enemy, "hp": 3, "attack_timer": 0.6, "flash": 0.0, "selection_ring": selection_ring})
+		enemies.append({"node": enemy, "hp": 3, "attack_timer": 0.6, "flash": 0.0, "hit_scale": 0.0, "knockback": Vector3.ZERO, "dead": false, "death_timer": 0.0, "selection_ring": selection_ring})
 
 func _build_camera() -> void:
 	camera = Camera3D.new()
@@ -744,28 +744,42 @@ func _spin_attack() -> void:
 	status_label.text = "ВИХРЬ!" if hit_any else "ВИХРЬ — НИКОГО НЕ ЗАДЕЛ"
 
 func _damage_enemy(index: int, amount: int) -> void:
+	if index < 0 or index >= enemies.size():
+		return
 	var enemy: Dictionary = enemies[index]
-	enemy["hp"] = int(enemy["hp"]) - amount
+	if bool(enemy.get("dead", false)):
+		return
 	var node: Node3D = enemy["node"]
-	node.scale = Vector3(1.12, 0.88, 1.12)
-	enemy["flash"] = 0.12
+	enemy["hp"] = int(enemy["hp"]) - amount
+	enemy["flash"] = 0.16
+	enemy["hit_scale"] = 0.16
+	var away := node.global_position - player.global_position
+	away.y = 0.0
+	if away.length_squared() > 0.001:
+		enemy["knockback"] = away.normalized() * 2.8
+	enemies[index] = enemy
 	if int(enemy["hp"]) <= 0:
-		var drop := Node3D.new()
-		drop.position = node.position + Vector3(0, 0.3, 0)
-		var orb := MeshInstance3D.new()
-		var orb_mesh := SphereMesh.new()
-		orb_mesh.radius = 0.16
-		orb_mesh.height = 0.32
-		orb.mesh = orb_mesh
-		orb.material_override = mat_gold
-		drop.add_child(orb)
-		add_child(drop)
-		loot.append({"node": drop, "value": 5})
-		node.queue_free()
-		enemies.remove_at(index)
-		defeated += 1
-		if enemies.is_empty():
-			_finish_game(true)
+		enemy["dead"] = true
+		enemy["death_timer"] = 0.48
+		enemy["knockback"] = away.normalized() * 1.2 if away.length_squared() > 0.001 else Vector3.ZERO
+		var selection_ring: MeshInstance3D = enemy["selection_ring"]
+		selection_ring.visible = false
+		if attack_target == node:
+			attack_target = null
+		status_label.text = "ПРОТИВНИК ПОВЕРЖЕН"
+
+func _spawn_enemy_loot(node: Node3D) -> void:
+	var drop := Node3D.new()
+	drop.position = node.position + Vector3(0, 0.3, 0)
+	var orb := MeshInstance3D.new()
+	var orb_mesh := SphereMesh.new()
+	orb_mesh.radius = 0.16
+	orb_mesh.height = 0.32
+	orb.mesh = orb_mesh
+	orb.material_override = mat_gold
+	drop.add_child(orb)
+	add_child(drop)
+	loot.append({"node": drop, "value": 5})
 
 func _update_enemies(delta: float) -> void:
 	for i in range(enemies.size() - 1, -1, -1):
@@ -773,6 +787,22 @@ func _update_enemies(delta: float) -> void:
 		var node: Node3D = enemy["node"]
 		if not is_instance_valid(node):
 			enemies.remove_at(i)
+			continue
+		if bool(enemy.get("dead", false)):
+			enemy["death_timer"] = maxf(0.0, float(enemy["death_timer"]) - delta)
+			var death_progress := 1.0 - float(enemy["death_timer"]) / 0.48
+			node.position += Vector3(enemy["knockback"]) * delta
+			node.rotation.z = lerpf(0.0, 1.25, death_progress)
+			node.scale = Vector3.ONE * (1.0 - death_progress * 0.82)
+			if float(enemy["death_timer"]) <= 0.0:
+				_spawn_enemy_loot(node)
+				node.queue_free()
+				enemies.remove_at(i)
+				defeated += 1
+				if enemies.is_empty():
+					_finish_game(true)
+				continue
+			enemies[i] = enemy
 			continue
 		var to_player := player.global_position - node.global_position
 		to_player.y = 0.0
@@ -791,10 +821,14 @@ func _update_enemies(delta: float) -> void:
 					status_label.text = "ТЫ ПОЛУЧИЛ УРОН"
 					if player_hp <= 0:
 						_finish_game(false)
-		if float(enemy["flash"]) > 0.0:
-			enemy["flash"] = maxf(0.0, float(enemy["flash"]) - delta)
-			if float(enemy["flash"]) == 0.0:
-				node.scale = Vector3.ONE
+		var knockback: Vector3 = enemy["knockback"]
+		if knockback.length() > 0.05:
+			node.position += knockback * delta
+			enemy["knockback"] = knockback.move_toward(Vector3.ZERO, 13.0 * delta)
+		enemy["flash"] = maxf(0.0, float(enemy["flash"]) - delta)
+		enemy["hit_scale"] = maxf(0.0, float(enemy["hit_scale"]) - delta)
+		var punch := float(enemy["hit_scale"]) / 0.16
+		node.scale = Vector3(1.0 + punch * 0.12, 1.0 - punch * 0.10, 1.0 + punch * 0.12)
 		enemies[i] = enemy
 
 func _update_loot() -> void:
