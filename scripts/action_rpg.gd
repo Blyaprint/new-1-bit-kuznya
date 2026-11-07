@@ -378,7 +378,11 @@ func _physics_process(delta: float) -> void:
 	if paused or game_over or player == null:
 		return
 	var input_vector := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-	var move_dir := Vector3(input_vector.x, 0.0, input_vector.y)
+	var camera_right := camera.global_transform.basis.x
+	var camera_forward := -camera.global_transform.basis.z
+	camera_right.y = 0.0
+	camera_forward.y = 0.0
+	var move_dir := (camera_right.normalized() * input_vector.x) + (camera_forward.normalized() * -input_vector.y)
 	if move_dir.length() > 0.05:
 		move_dir = move_dir.normalized()
 		player.look_at(player.global_position + move_dir, Vector3.UP)
