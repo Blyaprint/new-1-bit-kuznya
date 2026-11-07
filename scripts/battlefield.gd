@@ -3,6 +3,50 @@ extends Control
 const BLACK := Color("#000000")
 const WHITE := Color("#FFFFFF")
 
+ 
+class DropZone extends HBoxContainer:
+	var controller: Control
+	var zone_id := ""
+
+	func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+		return controller != null and bool(controller.call("_can_accept_drop", zone_id, data))
+
+	func _drop_data(at_position: Vector2, data: Variant) -> void:
+		if controller == null:
+			return
+		var target_index := -1
+		if zone_id == "hand":
+			for child in get_children():
+				if child is DragCard and at_position.x < child.position.x + child.size.x * 0.5:
+					target_index = child.card_index
+					break
+		controller.call("_handle_drop", zone_id, data, target_index)
+
+
+class DragCard extends Button:
+	var controller: Control
+	var card_index := -1
+	var card_data: Dictionary = {}
+	var drop_zone: DropZone
+
+	func _get_drag_data(_at_position: Vector2) -> Variant:
+		if controller == null:
+			return null
+		var preview := Label.new()
+		preview.text = text
+		preview.add_theme_font_size_override("font_size", 10)
+		preview.add_theme_color_override("font_color", Color.BLACK)
+		set_drag_preview(preview)
+		return controller.call("_build_drag_payload", card_index)
+
+	func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+		return drop_zone != null and drop_zone._can_drop_data(Vector2.ZERO, data)
+
+	func _drop_data(_at_position: Vector2, data: Variant) -> void:
+		if drop_zone != null and controller != null:
+			controller.call("_handle_drop", drop_zone.zone_id, data, card_index)
+
+
 var turn_number := 1
 var player_turn := true
 var player_score := 16
