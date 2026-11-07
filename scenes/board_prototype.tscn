@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/board_prototype.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/ui/market_layer.tscn" id="2"]
 [ext_resource type="Texture2D" path="res://assets/ui/top_bar_frame.svg" id="3"]
 [ext_resource type="Texture2D" path="res://assets/ui/hand_tray_frame.svg" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/ui/header_button.tscn" id="5"]
 
 [node name="BoardPrototype" type="Control"]
 layout_mode = 3
@@ -40,3 +41,81 @@ texture = ExtResource("4")
 expand_mode = 1
 stretch_mode = 1
 mouse_filter = 2
+
+[node name="CardViews" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="HeaderButtons" type="Control" parent="."]
+z_index = 10
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="RecipeButton" parent="HeaderButtons" instance=ExtResource("5")]
+offset_left = 430.0
+offset_top = 12.0
+offset_right = 560.0
+offset_bottom = 52.0
+button_text = "РЕЦЕПТ: ПОДКОВА"
+
+[node name="NewGameButton" parent="HeaderButtons" instance=ExtResource("5")]
+offset_left = 570.0
+offset_top = 12.0
+offset_right = 682.0
+offset_bottom = 52.0
+button_text = "НОВАЯ ИГРА"
+
+[node name="MarketButton" parent="HeaderButtons" instance=ExtResource("5")]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -590.0
+offset_top = 12.0
+offset_right = -478.0
+offset_bottom = 52.0
+button_text = "ТОРГОВЕЦ"
+
+[node name="ProductionButton" parent="HeaderButtons" instance=ExtResource("5")]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -470.0
+offset_top = 12.0
+offset_right = -358.0
+offset_bottom = 52.0
+button_text = "ПРОИЗВОДСТВО"
+
+[node name="ResearchButton" parent="HeaderButtons" instance=ExtResource("5")]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -350.0
+offset_top = 12.0
+offset_right = -238.0
+offset_bottom = 52.0
+button_text = "ИССЛЕДОВАНИЕ"
+
+[node name="JournalButton" parent="HeaderButtons" instance=ExtResource("5")]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -230.0
+offset_top = 12.0
+offset_right = -138.0
+offset_bottom = 52.0
+button_text = "ЖУРНАЛ"
+
+[node name="ActionButton" parent="HeaderButtons" instance=ExtResource("5")]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -128.0
+offset_top = 12.0
+offset_right = -28.0
+offset_bottom = 52.0
+button_text = "ВЫПОЛНИТЬ"
