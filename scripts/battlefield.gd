@@ -7,11 +7,18 @@ const WHITE := Color("#FFFFFF")
 class DropZone extends HBoxContainer:
 	var controller: Control
 	var zone_id := ""
+	var valid_drag_over := false
 
 	func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
-		return controller != null and bool(controller.call("_can_accept_drop", zone_id, data))
+		var allowed := controller != null and bool(controller.call("_can_accept_drop", zone_id, data))
+		if valid_drag_over != allowed:
+			valid_drag_over = allowed
+			queue_redraw()
+		return allowed
 
 	func _drop_data(at_position: Vector2, data: Variant) -> void:
+		valid_drag_over = false
+		queue_redraw()
 		if controller == null:
 			return
 		var target_index := -1
@@ -21,6 +28,11 @@ class DropZone extends HBoxContainer:
 					target_index = child.card_index
 					break
 		controller.call("_handle_drop", zone_id, data, target_index)
+
+	func _draw() -> void:
+		if valid_drag_over:
+			var outline := Color("#000000") if zone_id == "effects" else Color("#FFFFFF")
+			draw_rect(Rect2(Vector2.ZERO, size).grow(-2.0), outline, false, 3.0)
 
 
 class CardFace extends Control:
