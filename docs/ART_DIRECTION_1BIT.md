@@ -34,3 +34,10 @@
 
 ## Asset provenance
 All replaced SVG files are original project-authored, crisp-edge monochrome vector pixel-art assets. They use no external artwork. Dithering is authored as explicit binary patterns.
+
+
+## Compact UI pass
+- Cards render at 65% of their former 76×88 layout size (49.4×57.2 logical pixels); hitboxes, hand spacing, board clamping and port positions use the reduced dimensions.
+- Header controls use explicit non-overlapping 640×360 hit regions and no oversized minimum width.
+- The market is one shared outer frame with two functional columns (inventory and trader) divided by a single pixel rule, rather than two visually separate floating windows.
+- Default font antialiasing and subpixel positioning are disabled so small labels do not smear. A dedicated embedded Tiny5 bitmap font remains a separate asset-integration step; do not mistake the fallback raster font for a true bitmap face.
