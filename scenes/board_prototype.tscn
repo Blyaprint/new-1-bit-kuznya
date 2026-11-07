@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/board_prototype.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/ui/market_layer.tscn" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" path="res://assets/ui/status_strip.svg" id="7"]
 [ext_resource type="PackedScene" path="res://scenes/ui/modal_layer.tscn" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/ui/link_view.tscn" id="9"]
+[ext_resource type="Texture2D" path="res://assets/ui/legend_direction.svg" id="10"]
 
 [node name="BoardPrototype" type="Control"]
 layout_mode = 3
@@ -227,3 +228,75 @@ visible = false
 width = 4.0
 default_color = Color(0.84, 0.67, 0.41, 1)
 antialiased = true
+
+[node name="GraphLegend" type="Control" parent="."]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -420.0
+offset_top = 76.0
+offset_right = -28.0
+offset_bottom = 104.0
+mouse_filter = 2
+
+[node name="OutputIcon" type="TextureRect" parent="GraphLegend"]
+offset_left = 0.0
+offset_top = 4.0
+offset_right = 12.0
+offset_bottom = 16.0
+texture = ExtResource("4")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="OutputLabel" type="Label" parent="GraphLegend"]
+offset_left = 16.0
+offset_top = 0.0
+offset_right = 76.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.67, 0.63, 0.56, 1)
+theme_override_font_sizes/font_size = 9
+text = "ВЫХОД"
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="InputIcon" type="TextureRect" parent="GraphLegend"]
+offset_left = 92.0
+offset_top = 4.0
+offset_right = 104.0
+offset_bottom = 16.0
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="InputLabel" type="Label" parent="GraphLegend"]
+offset_left = 108.0
+offset_top = 0.0
+offset_right = 160.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.67, 0.63, 0.56, 1)
+theme_override_font_sizes/font_size = 9
+text = "ВХОД"
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="DirectionIcon" type="TextureRect" parent="GraphLegend"]
+offset_left = 166.0
+offset_top = 4.0
+offset_right = 202.0
+offset_bottom = 20.0
+texture = ExtResource("10")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="DirectionLabel" type="Label" parent="GraphLegend"]
+offset_left = 206.0
+offset_top = 0.0
+offset_right = 300.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.67, 0.63, 0.56, 1)
+theme_override_font_sizes/font_size = 9
+text = "НАПРАВЛЕНИЕ"
+vertical_alignment = 1
+mouse_filter = 2
