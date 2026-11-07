@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/item_slot.gd" id="1"]
 
@@ -13,6 +13,18 @@ corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="IconStyle"]
+bg_color = Color(0.07, 0.075, 0.08, 1)
+border_color = Color(0.48, 0.39, 0.27, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
 
 [node name="ItemSlot" type="PanelContainer"]
 custom_minimum_size = Vector2(72, 96)
@@ -35,6 +47,7 @@ clip_text = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("IconStyle")
 
 [node name="IconLabel" type="Label" parent="Content/Icon"]
 layout_mode = 2
