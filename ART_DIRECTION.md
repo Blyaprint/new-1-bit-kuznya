@@ -32,3 +32,10 @@
 
 ## Verification status
 Visual changes were committed to the project source. Godot runtime is not available in the editing environment, so the scene has not been rendered or playtested here.
+
+
+## Combat feedback pass
+- The hero sword now swings on each confirmed melee hit using a short pivot animation.
+- Confirmed melee impacts create a brief expanding blade-colored ring.
+- The whirlwind ability creates a larger teal expanding ring and smaller impact rings on enemies hit.
+- Effects are procedural meshes with short lifetimes; they are not imported sprite or particle assets.
