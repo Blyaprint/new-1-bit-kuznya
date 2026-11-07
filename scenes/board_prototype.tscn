@@ -26,7 +26,7 @@ script = ExtResource("1")
 z_index = -1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 64.0
+offset_bottom = 54.0
 grow_horizontal = 2
 texture = ExtResource("3")
 expand_mode = 1
@@ -39,7 +39,7 @@ anchors_preset = 10
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -178.0
+offset_top = -90.0
 grow_horizontal = 2
 grow_vertical = 0
 texture = ExtResource("4")
@@ -67,72 +67,72 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="RecipeButton" parent="HeaderButtons" instance=ExtResource("5")]
-offset_left = 430.0
-offset_top = 12.0
-offset_right = 560.0
-offset_bottom = 52.0
+offset_left = 112.0
+offset_top = 27.0
+offset_right = 190.0
+offset_bottom = 49.0
 button_text = "РЕЦЕПТ: ПОДКОВА"
 
 [node name="NewGameButton" parent="HeaderButtons" instance=ExtResource("5")]
-offset_left = 570.0
-offset_top = 12.0
-offset_right = 682.0
-offset_bottom = 52.0
+offset_left = 194.0
+offset_top = 27.0
+offset_right = 278.0
+offset_bottom = 49.0
 button_text = "НОВАЯ ИГРА"
 
 [node name="MarketButton" parent="HeaderButtons" instance=ExtResource("5")]
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -590.0
-offset_top = 12.0
-offset_right = -478.0
-offset_bottom = 52.0
+offset_left = -356.0
+offset_top = 27.0
+offset_right = -294.0
+offset_bottom = 49.0
 button_text = "ТОРГОВЕЦ"
 
 [node name="ProductionButton" parent="HeaderButtons" instance=ExtResource("5")]
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -470.0
-offset_top = 12.0
-offset_right = -358.0
-offset_bottom = 52.0
+offset_left = -290.0
+offset_top = 27.0
+offset_right = -222.0
+offset_bottom = 49.0
 button_text = "ПРОИЗВОДСТВО"
 
 [node name="ResearchButton" parent="HeaderButtons" instance=ExtResource("5")]
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -350.0
-offset_top = 12.0
-offset_right = -238.0
-offset_bottom = 52.0
+offset_left = -218.0
+offset_top = 27.0
+offset_right = -152.0
+offset_bottom = 49.0
 button_text = "ИССЛЕДОВАНИЕ"
 
 [node name="JournalButton" parent="HeaderButtons" instance=ExtResource("5")]
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -230.0
-offset_top = 12.0
-offset_right = -138.0
-offset_bottom = 52.0
+offset_left = -148.0
+offset_top = 27.0
+offset_right = -94.0
+offset_bottom = 49.0
 button_text = "ЖУРНАЛ"
 
 [node name="ActionButton" parent="HeaderButtons" instance=ExtResource("5")]
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -128.0
-offset_top = 12.0
-offset_right = -28.0
-offset_bottom = 52.0
+offset_left = -90.0
+offset_top = 27.0
+offset_right = -12.0
+offset_bottom = 49.0
 button_text = "ВЫПОЛНИТЬ"
 
 [node name="BoardSurface" type="TextureRect" parent="."]
 z_index = -1
-offset_left = 28.0
-offset_top = 64.0
+offset_left = 14.0
+offset_top = 54.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = -28.0
-offset_bottom = -232.0
+offset_right = -14.0
+offset_bottom = -114.0
 texture = ExtResource("6")
 expand_mode = 1
 stretch_mode = 1
@@ -143,75 +143,75 @@ z_index = -1
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -232.0
-offset_bottom = -178.0
+offset_top = -114.0
+offset_bottom = -90.0
 texture = ExtResource("7")
 expand_mode = 1
 stretch_mode = 1
 mouse_filter = 2
 
 [node name="BoardTitle" type="Label" parent="."]
-offset_left = 46.0
-offset_top = 72.0
-offset_right = 300.0
-offset_bottom = 94.0
+offset_left = 24.0
+offset_top = 58.0
+offset_right = 220.0
+offset_bottom = 74.0
 theme_override_colors/font_color = Color(0.72, 0.60, 0.40, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 7
 mouse_filter = 2
 
 [node name="BoardSubtitle" type="Label" parent="."]
-offset_left = 46.0
-offset_top = 94.0
-offset_right = 700.0
-offset_bottom = 110.0
+offset_left = 24.0
+offset_top = 75.0
+offset_right = 330.0
+offset_bottom = 88.0
 theme_override_colors/font_color = Color(0.67, 0.63, 0.56, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 7
 mouse_filter = 2
 
 [node name="StatusMessage" type="Label" parent="."]
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 42.0
-offset_top = -226.0
-offset_right = -20.0
-offset_bottom = -202.0
+offset_left = 16.0
+offset_top = -108.0
+offset_right = -16.0
+offset_bottom = -92.0
 theme_override_colors/font_color = Color(0.72, 0.60, 0.40, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 7
 vertical_alignment = 1
 mouse_filter = 2
 
 [node name="HandTitle" type="Label" parent="."]
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 76.0
-offset_top = -142.0
-offset_right = 300.0
-offset_bottom = -124.0
+offset_left = 12.0
+offset_top = -88.0
+offset_right = 180.0
+offset_bottom = -72.0
 theme_override_colors/font_color = Color(0.94, 0.85, 0.69, 1)
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 7
 mouse_filter = 2
 
 [node name="HandCount" type="Label" parent="."]
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 76.0
-offset_top = -123.0
-offset_right = 330.0
-offset_bottom = -108.0
+offset_left = 12.0
+offset_top = -70.0
+offset_right = 180.0
+offset_bottom = -58.0
 theme_override_colors/font_color = Color(0.76, 0.68, 0.56, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 mouse_filter = 2
 
 [node name="Instruction" type="Label" parent="."]
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 28.0
-offset_top = -22.0
-offset_right = -20.0
-offset_bottom = -4.0
+offset_left = 14.0
+offset_top = -18.0
+offset_right = -14.0
+offset_bottom = -3.0
 theme_override_colors/font_color = Color(0.67, 0.63, 0.56, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 7
 mouse_filter = 2
 
 [node name="ModalLayer" parent="." instance=ExtResource("8")]
@@ -232,10 +232,10 @@ antialiased = true
 [node name="GraphLegend" type="Control" parent="."]
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -420.0
-offset_top = 76.0
-offset_right = -28.0
-offset_bottom = 104.0
+offset_left = -212.0
+offset_top = 58.0
+offset_right = -14.0
+offset_bottom = 80.0
 mouse_filter = 2
 
 [node name="OutputIcon" type="TextureRect" parent="GraphLegend"]
@@ -254,7 +254,7 @@ offset_top = 0.0
 offset_right = 76.0
 offset_bottom = 24.0
 theme_override_colors/font_color = Color(0.67, 0.63, 0.56, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 7
 text = "ВЫХОД"
 vertical_alignment = 1
 mouse_filter = 2
@@ -275,7 +275,7 @@ offset_top = 0.0
 offset_right = 160.0
 offset_bottom = 24.0
 theme_override_colors/font_color = Color(0.67, 0.63, 0.56, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 7
 text = "ВХОД"
 vertical_alignment = 1
 mouse_filter = 2
@@ -296,46 +296,46 @@ offset_top = 0.0
 offset_right = 300.0
 offset_bottom = 24.0
 theme_override_colors/font_color = Color(0.67, 0.63, 0.56, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 7
 text = "НАПРАВЛЕНИЕ"
 vertical_alignment = 1
 mouse_filter = 2
 
 [node name="BrandTitle" type="Label" parent="."]
-offset_left = 31.0
-offset_top = 13.0
-offset_right = 218.0
-offset_bottom = 34.0
+offset_left = 12.0
+offset_top = 4.0
+offset_right = 104.0
+offset_bottom = 25.0
 theme_override_colors/font_color = Color(0.94, 0.85, 0.69, 1)
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 14
 text = "КУЗНЯ"
 mouse_filter = 2
 
 [node name="BrandSubtitle" type="Label" parent="."]
-offset_left = 32.0
-offset_top = 37.0
-offset_right = 218.0
-offset_bottom = 51.0
+offset_left = 12.0
+offset_top = 27.0
+offset_right = 104.0
+offset_bottom = 40.0
 theme_override_colors/font_color = Color(0.72, 0.63, 0.51, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "ИНЖЕНЕРНАЯ МАСТЕРСКАЯ"
 mouse_filter = 2
 
 [node name="MoneyCaption" type="Label" parent="."]
-offset_left = 302.0
-offset_top = 12.0
-offset_right = 392.0
-offset_bottom = 27.0
+offset_left = 112.0
+offset_top = 4.0
+offset_right = 180.0
+offset_bottom = 17.0
 theme_override_colors/font_color = Color(0.74, 0.65, 0.52, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "МОНЕТЫ"
 mouse_filter = 2
 
 [node name="MoneyValue" type="Label" parent="."]
-offset_left = 302.0
-offset_top = 29.0
-offset_right = 392.0
-offset_bottom = 51.0
+offset_left = 112.0
+offset_top = 18.0
+offset_right = 180.0
+offset_bottom = 40.0
 theme_override_colors/font_color = Color(0.94, 0.83, 0.61, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 7
 mouse_filter = 2
