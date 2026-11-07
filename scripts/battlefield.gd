@@ -249,11 +249,14 @@ func _refresh_battlefield() -> void:
 	var enemy_section := _make_side_section("ПРОТИВНИК", enemy_score, enemy_cards, true)
 	battlefield.add_child(enemy_section)
 
+	var middle_panel := PanelContainer.new()
+	middle_panel.custom_minimum_size.y = 58
+	_style_panel(middle_panel, WHITE, BLACK)
 	var middle := VBoxContainer.new()
-	middle.custom_minimum_size.y = 54
+	middle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	middle.alignment = BoxContainer.ALIGNMENT_CENTER
 	middle.add_theme_constant_override("separation", 3)
-	_style_container(middle, WHITE, BLACK)
+	middle_panel.add_child(middle)
 	var effect_title := _label("ЭФФЕКТЫ ПОЛЯ", BLACK, 9)
 	effect_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	middle.add_child(effect_title)
@@ -275,7 +278,7 @@ func _refresh_battlefield() -> void:
 	message_label = _label(status_text, BLACK, 9)
 	message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	middle.add_child(message_label)
-	battlefield.add_child(middle)
+	battlefield.add_child(middle_panel)
 
 	var player_section := _make_side_section("ТВОЁ ПОЛЕ", player_score, player_cards, false)
 	battlefield.add_child(player_section)
