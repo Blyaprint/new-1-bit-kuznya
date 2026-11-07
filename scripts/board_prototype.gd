@@ -341,15 +341,15 @@ func _new_game_button_rect() -> Rect2:
 
 
 func _new_game_dialog_rect() -> Rect2:
-	return Rect2(size * 0.5 - Vector2(210.0, 105.0), Vector2(420.0, 210.0))
+	return Rect2(size * 0.5 - Vector2(190.0, 100.0), Vector2(380.0, 200.0))
 
 
 func _new_game_confirm_rect() -> Rect2:
-	return Rect2(_new_game_dialog_rect().position + Vector2(220.0, 150.0), Vector2(170.0, 38.0))
+	return Rect2(_new_game_dialog_rect().position + Vector2(190.0, 145.0), Vector2(150.0, 35.0))
 
 
 func _new_game_cancel_rect() -> Rect2:
-	return Rect2(_new_game_dialog_rect().position + Vector2(30.0, 150.0), Vector2(170.0, 38.0))
+	return Rect2(_new_game_dialog_rect().position + Vector2(20.0, 145.0), Vector2(150.0, 35.0))
 
 
 func _start_new_game() -> void:
@@ -403,7 +403,7 @@ func _trade_window_rect() -> Rect2:
 
 
 func _trade_close_rect() -> Rect2:
-	return Rect2(_trade_window_rect().end - Vector2(92.0, 44.0), Vector2(80.0, 30.0))
+	return Rect2(560.0, 24.0, 72.0, 26.0)
 
 
 func _trade_player_panel() -> Rect2:
