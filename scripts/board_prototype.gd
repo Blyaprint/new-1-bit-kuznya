@@ -966,9 +966,9 @@ func _filter_links_for_ids(graph_links: Array[String], ids: Array) -> Array[Stri
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), BG)
+	# Leave the HUD and hand-tray bands transparent so their imported textures remain visible.
+	draw_rect(Rect2(0, HEADER_HEIGHT, size.x, size.y - HEADER_HEIGHT - HAND_HEIGHT), BG)
 	_draw_workshop_background()
-	_draw_top_bar()
 	_draw_header_button(_recipe_button_rect(), "РЕЦЕПТ: %s" % selected_recipe.to_upper(), true)
 	_draw_header_button(_new_game_button_rect(), "НОВАЯ ИГРА", false)
 	_draw_header_button(_market_button_rect(), "ТОРГОВЕЦ", market_open)
@@ -1053,32 +1053,6 @@ func _draw_graph_legend() -> void:
 	draw_string(font, Vector2(x + 202, y + 4), "НАПРАВЛЕНИЕ", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
 
 
-func _draw_top_bar() -> void:
-	var bar := Rect2(0.0, 0.0, size.x, HEADER_HEIGHT)
-	draw_rect(Rect2(bar.position + Vector2(0, 5), bar.size), Color("#08090b", 0.65))
-	draw_rect(bar, Color("#211b16"))
-	draw_rect(Rect2(0, 0, size.x, 5), Color("#80613b"))
-	draw_rect(Rect2(0, 5, size.x, HEADER_HEIGHT - 10), Color("#29231d"))
-	for x in range(8, int(size.x), 18):
-		draw_line(Vector2(x, 8), Vector2(x, HEADER_HEIGHT - 8), Color("#a98758", 0.045), 1.0)
-	draw_rect(Rect2(16, 7, 218, 49), Color("#171513"))
-	draw_rect(Rect2(16, 7, 218, 49), Color("#a88756"), false, 1.5)
-	draw_rect(Rect2(20, 11, 210, 41), Color("#30271e"), false, 1.0)
-	draw_line(Vector2(25, 14), Vector2(225, 14), Color("#e4c38e", 0.35), 1.0)
-	draw_string(font, Vector2(31, 31), "КУЗНЯ", HORIZONTAL_ALIGNMENT_LEFT, 190, 19, Color("#f0d9b0"))
-	draw_string(font, Vector2(32, 46), "ИНЖЕНЕРНАЯ МАСТЕРСКАЯ", HORIZONTAL_ALIGNMENT_LEFT, 190, 8, Color("#b7a184"))
-	# Coin purse medallion and readable balance.
-	draw_circle(Vector2(276, 31), 20, Color("#100e0b"))
-	draw_arc(Vector2(276, 31), 18, 0.0, TAU, 48, Color("#d4ad6c"), 2.0)
-	draw_circle(Vector2(276, 31), 12, Color("#8b642f"))
-	draw_circle(Vector2(276, 31), 8, Color("#d9b36f"))
-	draw_string(font, Vector2(302, 27), "МОНЕТЫ", HORIZONTAL_ALIGNMENT_LEFT, 90, 8, Color("#bca786"))
-	draw_string(font, Vector2(302, 44), "%d" % money, HORIZONTAL_ALIGNMENT_LEFT, 90, 16, Color("#f0d39a"))
-	draw_rect(Rect2(0, HEADER_HEIGHT - 4, size.x, 4), Color("#100e0c"))
-	draw_line(Vector2(0, HEADER_HEIGHT - 3), Vector2(size.x, HEADER_HEIGHT - 3), Color("#d2ae72"), 1.0)
-	draw_line(Vector2(0, HEADER_HEIGHT - 1), Vector2(size.x, HEADER_HEIGHT - 1), Color("#f2d9a0", 0.25), 1.0)
-
-
 func _draw_header_button(rect: Rect2, label: String, active: bool) -> void:
 	var fill := Color("#57432b") if active else Color("#242321")
 	var edge := Color("#e0bd80") if active else Color("#77664e")
@@ -1157,37 +1131,14 @@ func _card_edge_point(center: Vector2, direction: Vector2) -> Vector2:
 
 
 func _draw_hand() -> void:
+	# The hand-tray frame is an imported SVG texture in board_prototype.tscn.
+	# Keep only dynamic labels and the interactive item cards in code.
 	var hand_area := _hand_rect()
-	draw_rect(Rect2(hand_area.position + Vector2(0, 6), hand_area.size), Color("#08090b", 0.8))
-	draw_rect(hand_area, Color("#211b15"))
-	draw_rect(Rect2(0, hand_area.position.y + 3, size.x, hand_area.size.y - 6), Color("#30271e"))
-	for x in range(8, int(size.x), 24):
-		draw_line(Vector2(x, hand_area.position.y + 8), Vector2(x, hand_area.end.y - 8), Color("#c19a62", 0.035), 1.0)
-	draw_rect(Rect2(0, hand_area.position.y, size.x, 4), Color("#100e0b"))
-	draw_line(Vector2(0, hand_area.position.y + 4), Vector2(size.x, hand_area.position.y + 4), Color("#d0aa70"), 1.5)
-	draw_line(Vector2(0, hand_area.end.y - 5), Vector2(size.x, hand_area.end.y - 5), Color("#80613b"), 2.0)
-	# Riveted end plates frame the hand as a physical wooden card rack.
-	for side_x in [12.0, size.x - 34.0]:
-		draw_rect(Rect2(side_x, hand_area.position.y + 13, 22, hand_area.size.y - 27), Color("#171411"))
-		draw_rect(Rect2(side_x, hand_area.position.y + 13, 22, hand_area.size.y - 27), Color("#98774d"), false, 1.5)
-		for rivet_y in [hand_area.position.y + 24, hand_area.end.y - 24]:
-			draw_circle(Vector2(side_x + 11, rivet_y), 3.2, Color("#c4a06a"))
-			draw_circle(Vector2(side_x + 11, rivet_y), 1.2, Color("#59452d"))
-	# Left-side information plaque; cards stay centered and fully draggable.
-	var plaque := Rect2(42, hand_area.position.y + 19, 248, 56)
-	draw_rect(Rect2(plaque.position + Vector2(2, 3), plaque.size), Color("#090807", 0.75))
-	draw_rect(plaque, Color("#171411"))
-	draw_rect(plaque, Color("#9a784c"), false, 1.5)
-	draw_rect(Rect2(plaque.position + Vector2(4, 4), plaque.size - Vector2(8, 8)), Color("#30271f"), false, 1.0)
-	draw_string(font, plaque.position + Vector2(12, 23), "РУКА МАСТЕРА", HORIZONTAL_ALIGNMENT_LEFT, 220, 12, Color("#f0d9b0"))
 	var total_items := 0
 	for card in _hand_cards():
 		total_items += int(card.get("quantity", 1))
-	draw_string(font, plaque.position + Vector2(12, 42), "%d ПРЕДМЕТОВ  ·  ПЕРЕТАЩИ НА СТОЛ" % total_items, HORIZONTAL_ALIGNMENT_LEFT, 220, 8, Color("#c1ad8e"))
-	# Small decorative corner caps.
-	for corner in [Vector2(20, hand_area.position.y + 12), Vector2(size.x - 20, hand_area.position.y + 12)]:
-		draw_circle(corner, 4, Color("#d2ae72"))
-		draw_circle(corner, 1.5, Color("#4b3822"))
+	draw_string(font, Vector2(76, hand_area.position.y + 36), "РУКА МАСТЕРА", HORIZONTAL_ALIGNMENT_LEFT, 220, 12, Color("#f0d9b0"))
+	draw_string(font, Vector2(76, hand_area.position.y + 55), "%d ПРЕДМЕТОВ · ПЕРЕТАЩИ НА СТОЛ" % total_items, HORIZONTAL_ALIGNMENT_LEFT, 220, 8, Color("#c1ad8e"))
 	var hand := _hand_cards()
 	for i in range(hand.size()):
 		if int(hand[i].id) == drag_card_id:
