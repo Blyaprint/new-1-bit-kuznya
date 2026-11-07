@@ -12,8 +12,8 @@ This branch starts a new direction for the project: a compact 3D isometric actio
 - Health, gold and clear-progress HUD; victory/defeat and restart.
 
 ## Controls
-- Left mouse on the ground — move to the clicked point
-- Left mouse on an enemy — approach and attack automatically
+- Left mouse on the ground — move to the clicked point (with a destination marker)
+- Left mouse on an enemy — approach and attack automatically (with a target ring)
 - Right mouse — area attack
 - Q or Space — dash (brief invulnerability)
 - E — area attack (keyboard alternative)
@@ -22,7 +22,7 @@ This branch starts a new direction for the project: a compact 3D isometric actio
 - R — restart after victory or defeat
 
 ## Art direction
-The first slice uses original low-poly primitive models and a restrained palette to establish scale, lighting, silhouettes and camera readability. It is intentionally a greybox-quality art pass, not final bespoke character or environment art. The low-resolution viewport and nearest filtering create the pixelated presentation.
+The visual pass now uses a restrained slate-and-ash palette with warm bronze and ember accents, a central dungeon floor sigil, trimmed pillars and walls, a more readable armored hero silhouette, ribbed bone wardens, and clear click/target rings. The low-resolution viewport and nearest filtering create the pixelated presentation. These are procedural original meshes, not bespoke sprite sheets or hand-painted final assets.
 
 ## Verification
 The source is authored for Godot 4.6. A Godot executable is not available in the current editing environment, so scene import, GDScript parsing and interactive playtesting have not been run here. Open the project in Godot 4.6 and run the main scene to verify and tune it.
