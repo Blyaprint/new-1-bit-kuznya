@@ -997,7 +997,7 @@ func _sync_card_views() -> void:
 			view.z_index = 2
 		view.position = target
 		view.size = CARD_SIZE
-		view.set_card_data(card, on_board)
+		view.call("set_card_data", card, on_board)
 	for child in card_views.get_children():
 		if child is Control and str(child.name).begins_with("Card_"):
 			var id_text := str(child.name).trim_prefix("Card_")
@@ -1006,13 +1006,13 @@ func _sync_card_views() -> void:
 
 
 func _sync_header_captions() -> void:
-	$HeaderButtons/RecipeButton.set_caption("РЕЦЕПТ: %s" % selected_recipe.to_upper())
-	$HeaderButtons/NewGameButton.set_caption("НОВАЯ ИГРА")
-	$HeaderButtons/MarketButton.set_caption("ТОРГОВЕЦ")
-	$HeaderButtons/ProductionButton.set_caption("ПРОИЗВОДСТВО")
-	$HeaderButtons/ResearchButton.set_caption("ИССЛЕДОВАНИЕ")
-	$HeaderButtons/JournalButton.set_caption("ЖУРНАЛ")
-	$HeaderButtons/ActionButton.set_caption("ВЫПОЛНИТЬ" if mode == "production" else "ИСПЫТАТЬ")
+	$HeaderButtons/RecipeButton.call("set_caption", "РЕЦЕПТ: %s" % selected_recipe.to_upper())
+	$HeaderButtons/NewGameButton.call("set_caption", "НОВАЯ ИГРА")
+	$HeaderButtons/MarketButton.call("set_caption", "ТОРГОВЕЦ")
+	$HeaderButtons/ProductionButton.call("set_caption", "ПРОИЗВОДСТВО")
+	$HeaderButtons/ResearchButton.call("set_caption", "ИССЛЕДОВАНИЕ")
+	$HeaderButtons/JournalButton.call("set_caption", "ЖУРНАЛ")
+	$HeaderButtons/ActionButton.call("set_caption", "ВЫПОЛНИТЬ" if mode == "production" else "ИСПЫТАТЬ")
 
 
 func _draw() -> void:
