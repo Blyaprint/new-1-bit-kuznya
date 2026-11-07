@@ -1025,9 +1025,7 @@ func _sync_header_captions() -> void:
 
 
 func _draw() -> void:
-	# Leave the HUD and hand-tray bands transparent so their imported textures remain visible.
-	draw_rect(Rect2(0, HEADER_HEIGHT, size.x, size.y - HEADER_HEIGHT - HAND_HEIGHT), BG)
-	_draw_workshop_background()
+	# The board, HUD, hand tray and status strip are scene textures.
 	_draw_header_button(_recipe_button_rect(), "РЕЦЕПТ: %s" % selected_recipe.to_upper(), true)
 	_draw_header_button(_new_game_button_rect(), "НОВАЯ ИГРА", false)
 	_draw_header_button(_market_button_rect(), "ТОРГОВЕЦ", market_open)
@@ -1074,18 +1072,7 @@ func _draw_new_game_confirmation() -> void:
 
 
 func _draw_workshop_background() -> void:
-	# Subtle stone-and-wood workshop grid.
-	var area := _board_rect()
-	var grid_color := Color("#343238")
-	var spacing := 64.0
-	var x := area.position.x
-	while x < area.end.x:
-		draw_line(Vector2(x, area.position.y), Vector2(x, area.end.y), grid_color, 1.0)
-		x += spacing
-	var y := area.position.y
-	while y < area.end.y:
-		draw_line(Vector2(area.position.x, y), Vector2(area.end.x, y), grid_color, 1.0)
-		y += spacing
+	pass
 
 
 func _draw_graph_legend() -> void:
@@ -1168,17 +1155,7 @@ func _card_edge_point(center: Vector2, direction: Vector2) -> Vector2:
 
 
 func _draw_hand() -> void:
-	# The hand-tray frame is an imported SVG texture in board_prototype.tscn.
-	# Keep only dynamic labels and the interactive item cards in code.
-	var hand_area := _hand_rect()
-	var total_items := 0
-	for card in _hand_cards():
-		total_items += int(card.get("quantity", 1))
-	var hand := _hand_cards()
-	for i in range(hand.size()):
-		if int(hand[i].id) == drag_card_id:
-			continue
-		_draw_card(hand[i], _hand_card_rect(i, hand.size()).position, false)
+	pass
 
 
 func _draw_card(_card: Dictionary, _top_left: Vector2, _on_board := false) -> void:
