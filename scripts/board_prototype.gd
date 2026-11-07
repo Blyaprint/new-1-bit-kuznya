@@ -1071,43 +1071,12 @@ func _sync_header_captions() -> void:
 	$HeaderButtons/ActionButton.call("set_caption", "ВЫПОЛНИТЬ" if mode == "production" else "ИСПЫТАТЬ")
 
 
-func _draw() -> void:
-	# Only transient graph feedback and legacy modal overlays remain here.
-	if market_open:
-		_draw_market()
-
-
-func _draw_new_game_confirmation() -> void:
-	pass
-
-
-func _draw_workshop_background() -> void:
-	pass
-
-
-func _draw_header_button(_rect: Rect2, _label: String, _active: bool) -> void:
-	pass
-
-
-func _draw_links() -> void:
-	pass
-
-
 func _card_edge_point(center: Vector2, direction: Vector2) -> Vector2:
 	var half := CARD_SIZE * 0.5
 	var scale_x := half.x / maxf(0.001, absf(direction.x))
 	var scale_y := half.y / maxf(0.001, absf(direction.y))
 	var distance := minf(scale_x, scale_y)
 	return center + direction * distance
-
-
-func _draw_hand() -> void:
-	pass
-
-
-func _draw_card(_card: Dictionary, _top_left: Vector2, _on_board := false) -> void:
-	# Cards are rendered by reusable CardView scene instances.
-	pass
 
 
 func _category_color(category: String) -> Color:
@@ -1142,34 +1111,6 @@ func _category_label(category: String) -> String:
 			return category
 
 
-func _draw_card_emblem(category: String, center: Vector2, color: Color) -> void:
-	match category:
-		"МАТЕРИАЛ":
-			draw_circle(center, 21.0, Color("#b8c8c1"))
-			draw_circle(center, 16.0, color)
-			draw_line(center + Vector2(-10, 5), center + Vector2(7, -8), Color("#d9e0d5"), 3.0)
-			draw_line(center + Vector2(-5, 12), center + Vector2(12, -1), Color("#d9e0d5"), 2.0)
-		"ИНСТРУМЕНТ":
-			draw_circle(center, 22.0, Color("#d5c19d"))
-			draw_rect(Rect2(center + Vector2(-5, -16), Vector2(10, 32)), color)
-			draw_rect(Rect2(center + Vector2(-15, -17), Vector2(30, 9)), Color("#584633"))
-			draw_line(center + Vector2(-10, 12), center + Vector2(10, -12), Color("#f2dfb8"), 3.0)
-		"ОПЕРАЦИЯ":
-			draw_circle(center, 22.0, Color("#e3c5a2"))
-			draw_circle(center, 15.0, color)
-			for i in range(8):
-				var angle := TAU * float(i) / 8.0
-				draw_line(center + Vector2(cos(angle), sin(angle)) * 15.0, center + Vector2(cos(angle), sin(angle)) * 21.0, color, 4.0)
-			draw_circle(center, 5.0, Color("#f4e6c9"))
-		"ОБЪЕКТ":
-			draw_colored_polygon(PackedVector2Array([center + Vector2(-22, -14), center + Vector2(16, -18), center + Vector2(23, 12), center + Vector2(-14, 19)]), color)
-			draw_line(center + Vector2(-14, 4), center + Vector2(13, -5), Color("#e5e0c9"), 3.0)
-		"ИЗДЕЛИЕ":
-			draw_circle(center, 23.0, Color("#e6d4a6"))
-			draw_circle(center, 17.0, color)
-			draw_arc(center, 12.0, 0.2, TAU - 0.2, 28, Color("#fff0bd"), 4.0)
-
-
 func _trade_sale_hint(title: String, quantity: int) -> String:
 	match title:
 		"Железо":
@@ -1188,11 +1129,6 @@ func _trade_sale_hint(title: String, quantity: int) -> String:
 			return "Торговец не покупает"
 
 
-func _draw_market() -> void:
-	# The market is composed from reusable Control scenes in MarketLayer.tscn.
-	pass
-
-
 func _trade_category_for_title(title: String) -> String:
 	match title:
 		"Молот":
@@ -1204,33 +1140,3 @@ func _trade_category_for_title(title: String) -> String:
 		_:
 			return "МАТЕРИАЛ"
 
-
-func _draw_rpg_window(rect: Rect2, heading: String, subtitle: String) -> void:
-	draw_rect(Rect2(rect.position + Vector2(5, 7), rect.size), Color("#050608", 0.8))
-	draw_rect(rect, Color("#171a1e"))
-	draw_rect(rect, Color("#9c8054"), false, 2.0)
-	draw_rect(Rect2(rect.position + Vector2(4, 4), rect.size - Vector2(8, 8)), Color("#292b2f"), false, 1.0)
-	draw_rect(Rect2(rect.position + Vector2(7, 7), Vector2(rect.size.x - 14, 43)), Color("#38332d"))
-	draw_line(rect.position + Vector2(10, 49), rect.position + Vector2(rect.size.x - 10, 49), Color("#9c8054"), 1.0)
-	draw_string(font, rect.position + Vector2(17, 26), heading, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 34, 14, Color("#f0dfbd"))
-	draw_string(font, rect.position + Vector2(17, 42), subtitle, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 34, 8, Color("#b9aa90"))
-
-
-func _draw_inventory_slot(rect: Rect2, hovered: bool) -> void:
-	var edge := Color("#d4b47d") if hovered else Color("#655b4b")
-	draw_rect(Rect2(rect.position + Vector2(2, 3), rect.size), Color("#08090b", 0.75))
-	draw_rect(rect, Color("#17191d"))
-	draw_rect(rect, edge, false, 1.5 if hovered else 1.0)
-	draw_rect(Rect2(rect.position + Vector2(3, 3), rect.size - Vector2(6, 6)), Color("#25272b"))
-	draw_line(rect.position + Vector2(5, 5), rect.position + Vector2(rect.size.x - 5, 5), Color("#ffffff", 0.07), 1.0)
-
-
-func _draw_item_medallion(slot: Rect2, category: String, item_color: Color) -> void:
-	var center := slot.position + Vector2(31, 29)
-	draw_circle(center, 23.0, Color("#111316"))
-	draw_arc(center, 22.0, 0.0, TAU, 36, Color("#8c7654"), 1.5)
-	_draw_card_emblem(category, center, item_color)
-
-
-func _draw_journal() -> void:
-	pass
