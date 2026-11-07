@@ -1073,7 +1073,6 @@ func _sync_header_captions() -> void:
 
 func _draw() -> void:
 	# Only transient graph feedback and legacy modal overlays remain here.
-	_draw_graph_legend()
 	if market_open:
 		_draw_market()
 
@@ -1084,18 +1083,6 @@ func _draw_new_game_confirmation() -> void:
 
 func _draw_workshop_background() -> void:
 	pass
-
-
-func _draw_graph_legend() -> void:
-	var x := size.x - 420.0
-	var y := HEADER_HEIGHT + 20.0
-	draw_circle(Vector2(x, y), 5.0, ACCENT)
-	draw_string(font, Vector2(x + 10, y + 4), "ВЫХОД", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
-	draw_circle(Vector2(x + 92, y), 5.0, Color("#82b8a0"))
-	draw_string(font, Vector2(x + 102, y + 4), "ВХОД", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
-	draw_line(Vector2(x + 166, y), Vector2(x + 194, y), LINK_COLOR, 2.0)
-	draw_colored_polygon(PackedVector2Array([Vector2(x + 194, y), Vector2(x + 186, y - 4), Vector2(x + 186, y + 4)]), LINK_COLOR)
-	draw_string(font, Vector2(x + 202, y + 4), "НАПРАВЛЕНИЕ", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
 
 
 func _draw_header_button(_rect: Rect2, _label: String, _active: bool) -> void:
