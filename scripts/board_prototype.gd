@@ -58,6 +58,7 @@ var mouse_position := Vector2.ZERO
 var font: Font
 @onready var market_layer: Control = $MarketLayer
 @onready var card_views: Control = $CardViews
+@onready var modal_layer: Control = $ModalLayer
 
 
 func _ready() -> void:
@@ -1006,6 +1007,11 @@ func _sync_card_views() -> void:
 
 
 func _sync_header_captions() -> void:
+	$ModalLayer/NewGamePanel.visible = confirm_new_game
+	$ModalLayer/Dimmer.visible = confirm_new_game
+	$ModalLayer/JournalPanel.visible = journal_open
+	var journal_entries := "Пока нет открытий." if discoveries.is_empty() else "\n".join(discoveries)
+	$ModalLayer/JournalPanel/Entries.text = journal_entries
 	$BoardTitle.text = "ПРОИЗВОДСТВО" if mode == "production" else "ИССЛЕДОВАНИЕ"
 	$BoardSubtitle.text = "СОБИРАЙ РАБОЧУЮ ТЕХНОЛОГИЮ · МАТЕРИАЛЫ РАСХОДУЮТСЯ" if mode == "production" else "ПРОВЕРЯЙ ГИПОТЕЗЫ · ЭКСПЕРИМЕНТЫ БЕСПЛАТНЫ"
 	$StatusMessage.text = execution_message
@@ -1033,23 +1039,12 @@ func _draw() -> void:
 		if not source.is_empty():
 			draw_line(_port_position(source, true, connecting_from_port), mouse_position, ACCENT, 4.0, true)
 			draw_circle(mouse_position, 7.0, ACCENT)
-	if journal_open:
-		_draw_journal()
 	if market_open:
 		_draw_market()
-	if confirm_new_game:
-		_draw_new_game_confirmation()
 
 
 func _draw_new_game_confirmation() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.72))
-	var panel := _new_game_dialog_rect()
-	draw_rect(panel, Color("#171b15"))
-	draw_rect(panel, Color("#d0a15e"), false, 2.0)
-	draw_string(font, panel.position + Vector2(28, 42), "НАЧАТЬ НОВУЮ ИГРУ?", HORIZONTAL_ALIGNMENT_LEFT, 360, 18, ACCENT)
-	draw_multiline_string(font, panel.position + Vector2(28, 78), "Текущий прогресс, деньги, предметы и оборудование будут сброшены. Начальный набор: 5 монет, железо, уголь, молот и горн.", HORIZONTAL_ALIGNMENT_LEFT, 360, 12, 0, CARD_BORDER)
-	_draw_header_button(_new_game_cancel_rect(), "ОТМЕНА", false)
-	_draw_header_button(_new_game_confirm_rect(), "НАЧАТЬ ЗАНОВО", true)
+	pass
 
 
 func _draw_workshop_background() -> void:
@@ -1236,14 +1231,4 @@ func _draw_item_medallion(slot: Rect2, category: String, item_color: Color) -> v
 
 
 func _draw_journal() -> void:
-	var panel := Rect2(size.x - 330.0, 72.0, 300.0, 220.0)
-	draw_rect(panel, Color("#171b15"))
-	draw_rect(panel, Color("#d0a15e"), false, 2.0)
-	draw_rect(Rect2(panel.position, Vector2(panel.size.x, 38)), Color("#4a3a27"))
-	draw_string(font, panel.position + Vector2(16, 25), "ЖУРНАЛ ОТКРЫТИЙ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, CARD_BORDER)
-	if discoveries.is_empty():
-		draw_string(font, panel.position + Vector2(16, 66), "Пока нет открытий.", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, MUTED)
-	else:
-		for i in range(discoveries.size()):
-			draw_circle(panel.position + Vector2(22, 59 + i * 24), 4.0, OPERATION_COLOR)
-			draw_string(font, panel.position + Vector2(36, 63 + i * 24), discoveries[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, CARD_BORDER)
+	pass
