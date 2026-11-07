@@ -42,6 +42,8 @@ var trader_stock := {"Железо": 99, "Уголь": 99, "Молот": 99, "Г
 var trade_drag_source := ""
 var trade_drag_title := ""
 var trade_drag_position := Vector2.ZERO
+var market_anim := 1.0
+var market_animating := false
 var selected_recipe := "Подкова"
 var drag_card_id := -1
 var drag_from_hand := false
@@ -103,6 +105,23 @@ func _set_active_links(value: Array[String]) -> void:
 		research_links = value
 
 
+func _process(_delta: float) -> void:
+	if market_animating:
+		queue_redraw()
+
+
+func _animate_market_open() -> void:
+	market_anim = 0.0
+	market_animating = true
+	var tween := create_tween()
+	tween.tween_property(self, "market_anim", 1.0, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.finished.connect(func() -> void:
+		market_animating = false
+		market_anim = 1.0
+		queue_redraw()
+	)
+
+
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		mouse_position = event.position
@@ -142,6 +161,8 @@ func _gui_input(event: InputEvent) -> void:
 			if _market_button_rect().has_point(mouse_position):
 				market_open = not market_open
 				journal_open = false
+				if market_open:
+					_animate_market_open()
 				accept_event()
 				queue_redraw()
 				return
@@ -1196,6 +1217,8 @@ func _draw_market() -> void:
 	var merchant_panel := _trade_merchant_panel()
 	# The two panels are separate windows, not one combined exchange dialog.
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.48))
+	var panel_scale := lerpf(0.94, 1.0, market_anim)
+	draw_set_transform(size * (1.0 - panel_scale) * 0.5, 0.0, Vector2.ONE * panel_scale)
 	_draw_rpg_window(player_panel, "ИНВЕНТАРЬ", "ЛИЧНЫЕ ВЕЩИ И МАТЕРИАЛЫ")
 	_draw_rpg_window(merchant_panel, "ТОРГОВЕЦ", "ТОВАРЫ И МАСТЕРСКОЙ ЗАПАС")
 	var hovered_title := ""
@@ -1250,6 +1273,7 @@ func _draw_market() -> void:
 			tip.position.y = mouse_position.y - tip.size.y - 16
 		_draw_rpg_window(tip, hovered_title.to_upper(), "ОПИСАНИЕ ПРЕДМЕТА")
 		draw_multiline_string(font, tip.position + Vector2(12, 61), _trade_item_description(hovered_title), HORIZONTAL_ALIGNMENT_LEFT, 246, 10, 0, Color("#e4dac6"))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 func _trade_category_for_title(title: String) -> String:
