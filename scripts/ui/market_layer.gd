@@ -142,7 +142,7 @@ func _fill_window(window: Control, items: Array, show_stock: bool) -> void:
 		var count_label: Label = slot.get_node("Count")
 		name_label.text = ""
 		icon_label.text = "·"
-		category_label.text = "ПУСТО"
+		category_label.text = ""
 		count_label.text = ""
 		if i >= items.size():
 			continue
