@@ -17,7 +17,7 @@ class DropZone extends HBoxContainer:
 		var target_index := -1
 		if zone_id == "hand":
 			for child in get_children():
-				if child is DragCard and at_position.x < child.position.x + child.size.x * 0.5:
+				if child is CardFace and at_position.x < child.position.x + child.size.x * 0.5:
 					target_index = child.card_index
 					break
 		controller.call("_handle_drop", zone_id, data, target_index)
@@ -191,7 +191,7 @@ func _build_screen() -> void:
 	root.add_child(battlefield)
 
 	hand_panel = VBoxContainer.new()
-	hand_panel.custom_minimum_size.y = 72
+	hand_panel.custom_minimum_size.y = 122
 	hand_panel.add_theme_constant_override("separation", 1)
 	_style_container(hand_panel, BLACK, WHITE)
 	root.add_child(hand_panel)
@@ -299,24 +299,12 @@ func _make_side_section(title: String, score: int, cards: Array[Dictionary], opp
 	return section
 
 func _field_card(data: Dictionary) -> Control:
-	var panel := PanelContainer.new()
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.custom_minimum_size = Vector2(62, 65)
-	_style_panel(panel, WHITE, BLACK)
-	var box := VBoxContainer.new()
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	var glyph := _label("◆", BLACK, 18)
-	glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(glyph)
-	var title := _label(str(data.name), BLACK, 9)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(title)
-	var power := _label(str(data.power), BLACK, 14)
-	power.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(power)
-	panel.add_child(box)
-	return panel
+	var face := CardFace.new()
+	face.card_data = data
+	face.compact = true
+	face.custom_minimum_size = Vector2(62, 72)
+	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return face
 
 func _refresh_hand() -> void:
 	for child in hand_panel.get_children():
@@ -328,41 +316,22 @@ func _refresh_hand() -> void:
 	hand_drop_zone.zone_id = "hand"
 	hand_row = hand_drop_zone
 	hand_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	hand_row.add_theme_constant_override("separation", 5)
+	hand_row.add_theme_constant_override("separation", -13)
+	hand_row.custom_minimum_size.y = 112
 	for i in range(hand_cards.size()):
-		var data: Dictionary = hand_cards[i]
-		var card := DragCard.new()
-		card.controller = self
-		card.card_index = i
-		card.card_data = data
-		card.drop_zone = hand_drop_zone
-		card.text = "%s\n%s\n%s" % [data.name, data.kind, str(data.power) if data.power > 0 else "ЭФФЕКТ"]
-		card.custom_minimum_size = Vector2(82, 48)
-		card.add_theme_font_size_override("font_size", 9)
-		card.tooltip_text = "Зажми и перетащи на нужную зону"
-		_style_drag_card(card)
-		hand_row.add_child(card)
+		var face := CardFace.new()
+		face.configure(hand_cards[i], self, i, hand_drop_zone)
+		face.tooltip_text = "Зажми и перетащи карту"
+		face.pivot_offset = Vector2(46, 106)
+		if hand_cards.size() > 1:
+			face.rotation_degrees = lerpf(-4.0, 4.0, float(i) / float(hand_cards.size() - 1))
+		face.z_index = i
+		hand_row.add_child(face)
 	if hand_cards.is_empty():
 		var no_cards := _label("КАРТ В РУКЕ НЕТ", WHITE, 9)
 		no_cards.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		hand_row.add_child(no_cards)
 	hand_panel.add_child(hand_row)
-
-func _style_drag_card(card: Button) -> void:
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = WHITE
-	normal.border_color = WHITE
-	normal.set_border_width_all(1)
-	var hover := StyleBoxFlat.new()
-	hover.bg_color = Color("#D8D8D8")
-	hover.border_color = WHITE
-	hover.set_border_width_all(2)
-	card.add_theme_stylebox_override("normal", normal)
-	card.add_theme_stylebox_override("hover", hover)
-	card.add_theme_stylebox_override("pressed", hover)
-	card.add_theme_color_override("font_color", BLACK)
-	card.add_theme_color_override("font_hover_color", BLACK)
-	card.add_theme_color_override("font_pressed_color", BLACK)
 
 func _build_drag_payload(index: int) -> Dictionary:
 	return {"type": "hand_card", "index": index}
