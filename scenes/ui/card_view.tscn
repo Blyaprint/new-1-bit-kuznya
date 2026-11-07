@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/ui/card_frame.svg" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/card_view.gd" id="2"]
