@@ -55,7 +55,6 @@ var connecting_from_port := -1
 var action_button_held := false
 var execution_message := "Производство: собери схему и нажми «Выполнить»."
 var mouse_position := Vector2.ZERO
-var font: Font
 @onready var market_layer: Control = $MarketLayer
 @onready var card_views: Control = $CardViews
 @onready var modal_layer: Control = $ModalLayer
@@ -64,7 +63,6 @@ var font: Font
 
 
 func _ready() -> void:
-	font = ThemeDB.fallback_font
 	market_layer.trade_requested.connect(_on_market_trade_requested)
 	market_layer.close_requested.connect(_on_market_close_requested)
 	mouse_filter = Control.MOUSE_FILTER_STOP
