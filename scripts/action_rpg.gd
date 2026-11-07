@@ -143,13 +143,20 @@ func _add_wall(pos: Vector3, dimensions: Vector3) -> void:
 	body.add_child(collision)
 
 func _add_pillar(pos: Vector3) -> void:
+	var pillar_body := StaticBody3D.new()
+	pillar_body.position = pos + Vector3(0, 1.4, 0)
+	add_child(pillar_body)
 	var pillar := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(1.0, 2.8, 1.0)
 	pillar.mesh = mesh
 	pillar.material_override = mat_wall
-	pillar.position = pos + Vector3(0, 1.4, 0)
-	add_child(pillar)
+	pillar_body.add_child(pillar)
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = mesh.size
+	collision.shape = shape
+	pillar_body.add_child(collision)
 
 func _add_torch(pos: Vector3) -> void:
 	var stand := MeshInstance3D.new()
@@ -242,7 +249,7 @@ func _build_enemies() -> void:
 	for point in spawn_points:
 		var enemy := Node3D.new()
 		enemy.name = "BoneWarden"
-		enemy.position = point
+		enemy.position = point + Vector3(0, 0.48, 0)
 		add_child(enemy)
 		var body := MeshInstance3D.new()
 		var body_mesh := CapsuleMesh.new()
@@ -385,7 +392,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
 			paused = not paused
-			get_tree().paused = paused
 			status_label.text = "ПАУЗА — ESC ДЛЯ ПРОДОЛЖЕНИЯ" if paused else "ЛКМ — АТАКА   SPACE — РЫВОК   Q — ВИХРЬ"
 		elif event.keycode == KEY_R and game_over:
 			get_tree().reload_current_scene()
@@ -395,6 +401,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			_spin_attack()
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		_attack()
+
+func _face_toward_mouse() -> void:
+	if camera == null or player == null:
+		return
+	var mouse := get_viewport().get_mouse_position()
+	var ray_origin := camera.project_ray_origin(mouse)
+	var ray_direction := camera.project_ray_normal(mouse)
+	var hit = Plane(Vector3.UP, 0.0).intersects_ray(ray_origin, ray_direction)
+	if hit != null:
+		var direction: Vector3 = hit - player.global_position
+		direction.y = 0.0
+		if direction.length() > 0.05:
+			player.look_at(player.global_position + direction.normalized(), Vector3.UP)
 
 func _dash() -> void:
 	var direction := Vector3(player.velocity.x, 0, player.velocity.z).normalized()
@@ -410,6 +429,7 @@ func _attack() -> void:
 	if attack_cooldown > 0.0 or game_over or paused:
 		return
 	attack_cooldown = 0.42
+	_face_toward_mouse()
 	var facing := -player.global_transform.basis.z
 	var hit_any := false
 	for i in range(enemies.size() - 1, -1, -1):
@@ -439,6 +459,7 @@ func _damage_enemy(index: int, amount: int) -> void:
 	enemy["hp"] = int(enemy["hp"]) - amount
 	var node: Node3D = enemy["node"]
 	node.scale = Vector3(1.12, 0.88, 1.12)
+	enemy["flash"] = 0.12
 	if int(enemy["hp"]) <= 0:
 		var drop := Node3D.new()
 		drop.position = node.position + Vector3(0, 0.3, 0)
@@ -481,7 +502,10 @@ func _update_enemies(delta: float) -> void:
 					status_label.text = "ТЫ ПОЛУЧИЛ УРОН"
 					if player_hp <= 0:
 						_finish_game(false)
-		enemy["flash"] = maxf(0.0, float(enemy["flash"]) - delta)
+		if float(enemy["flash"]) > 0.0:
+			enemy["flash"] = maxf(0.0, float(enemy["flash"]) - delta)
+			if float(enemy["flash"]) == 0.0:
+				node.scale = Vector3.ONE
 		enemies[i] = enemy
 
 func _update_loot() -> void:
