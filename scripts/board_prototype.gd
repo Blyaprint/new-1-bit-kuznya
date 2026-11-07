@@ -6,19 +6,19 @@ const HEADER_HEIGHT := 64.0
 const STATUS_HEIGHT := 54.0
 const BOARD_MARGIN := 28.0
 
-const BG := Color("#171713")
-const BOARD_BG := Color("#242923")
-const CARD_BG := Color("#e5d8bd")
-const CARD_BORDER := Color("#f5e9d2")
-const INK := Color("#29251f")
-const MUTED := Color("#b5b7a8")
-const ACCENT := Color("#e2a653")
-const LINK_COLOR := Color("#f0bd70")
-const MATERIAL_COLOR := Color("#6e9aaf")
-const TOOL_COLOR := Color("#c58b52")
-const OPERATION_COLOR := Color("#d47b55")
-const OBJECT_COLOR := Color("#8a9b72")
-const PRODUCT_COLOR := Color("#d2b45d")
+const BG := Color("#111316")
+const BOARD_BG := Color("#202328")
+const CARD_BG := Color("#292b30")
+const CARD_BORDER := Color("#b89a68")
+const INK := Color("#eee2c9")
+const MUTED := Color("#aaa18f")
+const ACCENT := Color("#d5aa68")
+const LINK_COLOR := Color("#e0b978")
+const MATERIAL_COLOR := Color("#7894a2")
+const TOOL_COLOR := Color("#b18a5c")
+const OPERATION_COLOR := Color("#a96f55")
+const OBJECT_COLOR := Color("#829078")
+const PRODUCT_COLOR := Color("#c4a15d")
 const SAVE_PATH := "user://kuznya_save.json"
 const IRON_PACK_SIZE := 2
 const COAL_PACK_SIZE := 5
@@ -918,8 +918,9 @@ func _filter_links_for_ids(graph_links: Array[String], ids: Array) -> Array[Stri
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), BG)
 	_draw_workshop_background()
-	draw_rect(Rect2(0, 0, size.x, HEADER_HEIGHT), Color("#11140f"))
-	draw_line(Vector2(0, HEADER_HEIGHT), Vector2(size.x, HEADER_HEIGHT), Color("#55452f"), 2.0)
+	draw_rect(Rect2(0, 0, size.x, HEADER_HEIGHT), Color("#17191d"))
+	draw_rect(Rect2(0, HEADER_HEIGHT - 3, size.x, 3), Color("#806744"))
+	draw_line(Vector2(0, HEADER_HEIGHT - 1), Vector2(size.x, HEADER_HEIGHT - 1), Color("#d0b17b", 0.35), 1.0)
 	draw_string(font, Vector2(28, 29), "КУЗНЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, CARD_BORDER)
 	draw_string(font, Vector2(28, 49), "ИНЖЕНЕРНАЯ МАСТЕРСКАЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
 	draw_string(font, Vector2(260, 36), "МОНЕТЫ: %d" % money, HORIZONTAL_ALIGNMENT_LEFT, 150, 14, ACCENT)
@@ -932,8 +933,10 @@ func _draw() -> void:
 	_draw_header_button(_action_button_rect(), "ВЫПОЛНИТЬ" if mode == "production" else "ИСПЫТАТЬ", true)
 
 	var board := _board_rect()
+	draw_rect(Rect2(board.position + Vector2(5, 7), board.size), Color("#070809", 0.55))
 	draw_rect(board, BOARD_BG)
-	draw_rect(board, Color("#65705c"), false, 2.0)
+	draw_rect(board, Color("#9b8058"), false, 2.0)
+	draw_rect(Rect2(board.position + Vector2(4, 4), board.size - Vector2(8, 8)), Color("#343239"), false, 1.0)
 	var mode_title := "ПРОИЗВОДСТВО" if mode == "production" else "ИССЛЕДОВАНИЕ"
 	var mode_subtitle := "СОБИРАЙ РАБОЧУЮ ТЕХНОЛОГИЮ · МАТЕРИАЛЫ РАСХОДУЮТСЯ" if mode == "production" else "ПРОВЕРЯЙ ГИПОТЕЗЫ · ЭКСПЕРИМЕНТЫ БЕСПЛАТНЫ"
 	draw_string(font, Vector2(board.position.x + 18, board.position.y + 24), mode_title, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, CARD_BORDER)
@@ -979,10 +982,9 @@ func _draw_new_game_confirmation() -> void:
 
 
 func _draw_workshop_background() -> void:
-	# Keep the workshop texture cheap: a few straight lines instead of
-	# hundreds of individual circles on every drag redraw.
+	# Subtle stone-and-wood workshop grid.
 	var area := _board_rect()
-	var grid_color := Color("#303a32")
+	var grid_color := Color("#343238")
 	var spacing := 64.0
 	var x := area.position.x
 	while x < area.end.x:
@@ -1007,10 +1009,13 @@ func _draw_graph_legend() -> void:
 
 
 func _draw_header_button(rect: Rect2, label: String, active: bool) -> void:
-	var fill := ACCENT if active else Color("#303941")
+	var fill := Color("#5b4932") if active else Color("#252a30")
+	var edge := Color("#dfbd80") if active else Color("#655b4c")
+	draw_rect(Rect2(rect.position + Vector2(2, 3), rect.size), Color("#090a0c", 0.72))
 	draw_rect(rect, fill)
-	draw_rect(rect, CARD_BORDER if active else Color("#56616b"), false, 1.0)
-	draw_string(font, rect.position + Vector2(8, 25), label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 16, 10, INK if active else CARD_BORDER)
+	draw_rect(rect, edge, false, 1.5)
+	draw_line(rect.position + Vector2(5, 3), rect.position + Vector2(rect.size.x - 5, 3), Color("#f1d6a5", 0.38), 1.0)
+	draw_string(font, rect.position + Vector2(8, 25), label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 16, 10, Color("#f2e5ca") if active else Color("#c8bda8"))
 
 
 func _draw_links() -> void:
@@ -1064,40 +1069,48 @@ func _draw_hand() -> void:
 func _draw_card(card: Dictionary, top_left: Vector2, on_board := false) -> void:
 	var rect := Rect2(top_left, CARD_SIZE)
 	var role_color := _category_color(str(card.category))
-	# Drop shadow and paper body.
-	draw_rect(Rect2(top_left + Vector2(4, 5), CARD_SIZE), Color("#090b08"))
-	draw_rect(rect, CARD_BG)
-	draw_rect(rect, Color("#302b21"), false, 2.0)
-	draw_rect(Rect2(top_left, Vector2(CARD_SIZE.x, 34)), role_color)
-	draw_string(font, top_left + Vector2(10, 22), _category_label(str(card.category)), HORIZONTAL_ALIGNMENT_LEFT, CARD_SIZE.x - 20, 9, Color("#171914"))
-	_draw_card_emblem(str(card.category), top_left + Vector2(CARD_SIZE.x * 0.5, 76), role_color)
-	draw_string(font, top_left + Vector2(8, 125), str(card.title), HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 14, INK)
+	# Layered dark-metal frame with a warm inset, like a premium RPG item card.
+	draw_rect(Rect2(top_left + Vector2(5, 6), CARD_SIZE), Color("#08090b", 0.82))
+	draw_rect(rect, Color("#17191d"))
+	draw_rect(rect, Color("#8e754f"), false, 2.0)
+	draw_rect(Rect2(top_left + Vector2(4, 4), CARD_SIZE - Vector2(8, 8)), CARD_BG)
+	draw_rect(Rect2(top_left + Vector2(6, 6), CARD_SIZE - Vector2(12, 12)), Color("#292b30"))
+	draw_rect(Rect2(top_left + Vector2(7, 7), Vector2(CARD_SIZE.x - 14, 28)), Color("#38332c"))
+	draw_rect(Rect2(top_left + Vector2(7, 7), Vector2(4, 28)), role_color)
+	draw_string(font, top_left + Vector2(16, 25), _category_label(str(card.category)), HORIZONTAL_ALIGNMENT_LEFT, CARD_SIZE.x - 28, 9, Color("#d9c7a5"))
+	# Emblem medallion.
+	draw_circle(top_left + Vector2(CARD_SIZE.x * 0.5, 78), 29.0, Color("#111316"))
+	draw_arc(top_left + Vector2(CARD_SIZE.x * 0.5, 78), 28.0, 0.0, TAU, 48, Color("#9d8258"), 2.0)
+	_draw_card_emblem(str(card.category), top_left + Vector2(CARD_SIZE.x * 0.5, 78), role_color)
+	draw_string(font, top_left + Vector2(8, 126), str(card.title), HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 14, Color("#f0e4cd"))
 	if int(card.get("quantity", 1)) > 1:
-		draw_string(font, top_left + Vector2(CARD_SIZE.x - 32, 48), "×%d" % int(card.quantity), HORIZONTAL_ALIGNMENT_CENTER, 26, 12, INK)
+		draw_rect(Rect2(top_left + Vector2(CARD_SIZE.x - 43, 38), Vector2(34, 20)), Color("#17191d"))
+		draw_string(font, top_left + Vector2(CARD_SIZE.x - 41, 53), "×%d" % int(card.quantity), HORIZONTAL_ALIGNMENT_CENTER, 30, 11, Color("#f2d59d"))
 	if str(card.title) in ["Молот", "Горн"]:
 		var max_dur := maxf(1.0, float(card.get("max_durability", TOOL_MAX_DURABILITY)))
 		var wear_ratio := 1.0 - clampf(float(card.get("durability", TOOL_MAX_DURABILITY)) / max_dur, 0.0, 1.0)
-		var bar_rect := Rect2(top_left + Vector2(CARD_SIZE.x - 12, 58), Vector2(6, 58))
-		draw_rect(bar_rect, Color("#8e9188"))
+		var bar_rect := Rect2(top_left + Vector2(CARD_SIZE.x - 13, 65), Vector2(4, 52))
+		draw_rect(bar_rect, Color("#55534d"))
 		if wear_ratio > 0.0:
 			var red_height := bar_rect.size.y * wear_ratio
-			draw_rect(Rect2(bar_rect.position.x, bar_rect.end.y - red_height, bar_rect.size.x, red_height), Color("#b83d32"))
-	draw_line(top_left + Vector2(10, 135), top_left + Vector2(CARD_SIZE.x - 10, 135), Color("#a99a7d"), 1.0)
-	draw_string(font, top_left + Vector2(8, 153), "УЗЕЛ СХЕМЫ" if on_board else "В ИНВЕНТАРЕ", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 8, Color("#675b49"))
+			draw_rect(Rect2(bar_rect.position.x, bar_rect.end.y - red_height, bar_rect.size.x, red_height), Color("#bd5549"))
+	draw_line(top_left + Vector2(13, 136), top_left + Vector2(CARD_SIZE.x - 13, 136), Color("#74664f"), 1.0)
+	draw_string(font, top_left + Vector2(8, 153), "УЗЕЛ СХЕМЫ" if on_board else "В ИНВЕНТАРЕ", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE.x - 16, 8, Color("#b6a587"))
 	if on_board:
-		# Each card exposes named sockets specific to its role.
 		var inputs := _input_ports(card)
 		var outputs := _output_ports(card)
 		for i in range(inputs.size()):
 			var p := _port_position(card, false, i)
-			draw_circle(p, 6.0, Color("#82b8a0"))
+			draw_circle(p, 7.0, Color("#18211f"))
+			draw_circle(p, 4.0, Color("#8fb9a2"))
 			var label_pos := Vector2(top_left.x + 8, p.y + 3)
-			draw_string(font, label_pos, str(inputs[i].label), HORIZONTAL_ALIGNMENT_LEFT, 46, 7, Color("#34483f"))
+			draw_string(font, label_pos, str(inputs[i].label), HORIZONTAL_ALIGNMENT_LEFT, 46, 7, Color("#d4e1d6"))
 		for i in range(outputs.size()):
 			var p := _port_position(card, true, i)
-			draw_circle(p, 6.0, ACCENT)
+			draw_circle(p, 7.0, Color("#2a2117"))
+			draw_circle(p, 4.0, ACCENT)
 			var label_pos := Vector2(top_left.x + CARD_SIZE.x - 54, p.y + 3)
-			draw_string(font, label_pos, str(outputs[i].label), HORIZONTAL_ALIGNMENT_RIGHT, 46, 7, Color("#594126"))
+			draw_string(font, label_pos, str(outputs[i].label), HORIZONTAL_ALIGNMENT_RIGHT, 46, 7, Color("#f0d8ad"))
 
 
 func _category_color(category: String) -> Color:
@@ -1181,86 +1194,101 @@ func _trade_sale_hint(title: String, quantity: int) -> String:
 func _draw_market() -> void:
 	var player_panel := _trade_player_panel()
 	var merchant_panel := _trade_merchant_panel()
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.62))
-	draw_rect(_trade_window_rect(), Color("#171b15"))
-	draw_rect(_trade_window_rect(), Color("#d0a15e"), false, 2.0)
-	draw_string(font, player_panel.position + Vector2(0, -14), "ОБМЕН", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, CARD_BORDER)
-	draw_string(font, player_panel.position + Vector2(0, 20), "ТВОЙ ИНВЕНТАРЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, ACCENT)
-	draw_string(font, merchant_panel.position + Vector2(0, 20), "ТОРГОВЕЦ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, ACCENT)
-	draw_string(font, player_panel.position + Vector2(0, 43), "Перетащи предмет направо, чтобы продать", HORIZONTAL_ALIGNMENT_LEFT, 300, 9, MUTED)
-	draw_string(font, merchant_panel.position + Vector2(0, 43), "Перетащи предмет налево, чтобы купить", HORIZONTAL_ALIGNMENT_LEFT, 300, 9, MUTED)
+	# The two panels are separate windows, not one combined exchange dialog.
+	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.48))
+	_draw_rpg_window(player_panel, "ИНВЕНТАРЬ", "ЛИЧНЫЕ ВЕЩИ И МАТЕРИАЛЫ")
+	_draw_rpg_window(merchant_panel, "ТОРГОВЕЦ", "ТОВАРЫ И МАСТЕРСКОЙ ЗАПАС")
 	var hovered_title := ""
-	var hovered_category := "МАТЕРИАЛ"
 	var player_items := _player_trade_items()
+	# Persistent 4 × 5 slot grids: empty spaces are visible and usable as drop targets later.
+	for i in range(20):
+		_draw_inventory_slot(_trade_row_rect(player_panel, i), false)
+		_draw_inventory_slot(_trade_row_rect(merchant_panel, i), false)
 	for i in range(player_items.size()):
 		var item: Dictionary = player_items[i]
 		var slot := _trade_row_rect(player_panel, i)
 		var is_dragged := trade_drag_source == "player" and trade_drag_title == str(item.title)
-		draw_rect(slot, Color("#252b24"))
-		draw_rect(slot, Color("#b89a68") if slot.has_point(mouse_position) and not is_dragged else Color("#59604f"), false, 2.0 if slot.has_point(mouse_position) else 1.0)
-		var item_color := _category_color(str(item.category))
-		draw_rect(Rect2(slot.position + Vector2(7, 7), Vector2(48, 48)), Color("#45483b"))
-		_draw_card_emblem(str(item.category), slot.position + Vector2(31, 29), item_color)
-		draw_string(font, slot.position + Vector2(3, 59), str(item.title), HORIZONTAL_ALIGNMENT_CENTER, 56, 8, CARD_BORDER)
-		if int(item.quantity) > 1:
-			draw_string(font, slot.position + Vector2(34, 14), "×%d" % int(item.quantity), HORIZONTAL_ALIGNMENT_RIGHT, 25, 9, CARD_BORDER)
+		if not is_dragged:
+			_draw_inventory_slot(slot, slot.has_point(mouse_position))
+			var item_color := _category_color(str(item.category))
+			_draw_item_medallion(slot, str(item.category), item_color)
+			draw_string(font, slot.position + Vector2(3, 59), str(item.title), HORIZONTAL_ALIGNMENT_CENTER, 56, 8, Color("#eee2c9"))
+			if int(item.quantity) > 1:
+				draw_string(font, slot.position + Vector2(34, 14), "×%d" % int(item.quantity), HORIZONTAL_ALIGNMENT_RIGHT, 25, 9, Color("#f2d59d"))
 		if slot.has_point(mouse_position) and not is_dragged:
 			hovered_title = str(item.title)
-			hovered_category = str(item.category)
 	var merchant_titles := _merchant_trade_titles()
 	for i in range(merchant_titles.size()):
 		var title: String = merchant_titles[i]
 		var slot := _trade_row_rect(merchant_panel, i)
 		var is_dragged := trade_drag_source == "merchant" and trade_drag_title == title
-		draw_rect(slot, Color("#252b24"))
-		draw_rect(slot, Color("#b89a68") if slot.has_point(mouse_position) and not is_dragged else Color("#59604f"), false, 2.0 if slot.has_point(mouse_position) else 1.0)
-		var category := "МАТЕРИАЛ"
-		if title == "Молот":
-			category = "ИНСТРУМЕНТ"
-		elif title == "Горн":
-			category = "ОПЕРАЦИЯ"
-		elif ["Подкова", "Гвозди", "Скоба"].has(title):
-			category = "ИЗДЕЛИЕ"
-		draw_rect(Rect2(slot.position + Vector2(7, 7), Vector2(48, 48)), Color("#45483b"))
-		_draw_card_emblem(category, slot.position + Vector2(31, 29), _category_color(category))
-		draw_string(font, slot.position + Vector2(3, 59), title, HORIZONTAL_ALIGNMENT_CENTER, 56, 8, CARD_BORDER)
-		draw_string(font, slot.position + Vector2(34, 14), str(trader_stock.get(title, 0)), HORIZONTAL_ALIGNMENT_RIGHT, 25, 9, CARD_BORDER)
+		var category := _trade_category_for_title(title)
+		if not is_dragged:
+			_draw_inventory_slot(slot, slot.has_point(mouse_position))
+			_draw_item_medallion(slot, category, _category_color(category))
+			draw_string(font, slot.position + Vector2(3, 59), title, HORIZONTAL_ALIGNMENT_CENTER, 56, 8, Color("#eee2c9"))
+			draw_string(font, slot.position + Vector2(34, 14), str(trader_stock.get(title, 0)), HORIZONTAL_ALIGNMENT_RIGHT, 25, 9, Color("#f2d59d"))
 		if slot.has_point(mouse_position) and not is_dragged:
 			hovered_title = title
-			hovered_category = category
-	draw_string(font, player_panel.position + Vector2(0, 403), "Баланс: %d монет" % money, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ACCENT)
-	draw_string(font, merchant_panel.position + Vector2(0, 403), "Предметы в квадратных ячейках", HORIZONTAL_ALIGNMENT_LEFT, 230, 9, MUTED)
-	draw_rect(_trade_close_rect(), Color("#4a3a27"))
-	draw_rect(_trade_close_rect(), Color("#b89a68"), false, 1.0)
-	draw_string(font, _trade_close_rect().position + Vector2(7, 19), "ЗАКРЫТЬ", HORIZONTAL_ALIGNMENT_CENTER, 66, 9, CARD_BORDER)
+	draw_string(font, player_panel.position + Vector2(18, 393), "МОНЕТЫ: %d" % money, HORIZONTAL_ALIGNMENT_LEFT, 260, 12, Color("#e7c58c"))
+	draw_string(font, merchant_panel.position + Vector2(18, 393), "Перетащи товар в инвентарь", HORIZONTAL_ALIGNMENT_LEFT, 280, 9, MUTED)
+	_draw_header_button(_trade_close_rect(), "ЗАКРЫТЬ", false)
 	if trade_drag_source != "" and trade_drag_title != "":
 		var drag_rect := Rect2(trade_drag_position - Vector2(31, 31), Vector2(62, 62))
-		draw_rect(drag_rect, Color("#c5a36c"))
-		draw_rect(drag_rect, Color("#fff0c8"), false, 2.0)
-		draw_rect(Rect2(drag_rect.position + Vector2(7, 7), Vector2(48, 48)), Color("#45483b"))
-		var drag_category := "МАТЕРИАЛ"
+		_draw_inventory_slot(drag_rect, true)
+		var drag_category := _trade_category_for_title(trade_drag_title)
 		if trade_drag_source == "player":
 			for item in player_items:
 				if str(item.title) == trade_drag_title:
 					drag_category = str(item.category)
-		else:
-			if trade_drag_title == "Молот":
-				drag_category = "ИНСТРУМЕНТ"
-			elif trade_drag_title == "Горн":
-				drag_category = "ОПЕРАЦИЯ"
-			elif ["Подкова", "Гвозди", "Скоба"].has(trade_drag_title):
-				drag_category = "ИЗДЕЛИЕ"
-		_draw_card_emblem(drag_category, drag_rect.position + Vector2(31, 29), _category_color(drag_category))
+		_draw_item_medallion(drag_rect, drag_category, _category_color(drag_category))
 	elif hovered_title != "":
 		var tip := Rect2(mouse_position + Vector2(18, 16), Vector2(270, 92))
 		if tip.end.x > size.x:
 			tip.position.x = mouse_position.x - tip.size.x - 18
 		if tip.end.y > size.y:
 			tip.position.y = mouse_position.y - tip.size.y - 16
-		draw_rect(tip, Color("#11140f"))
-		draw_rect(tip, Color("#d0a15e"), false, 2.0)
-		draw_string(font, tip.position + Vector2(12, 22), hovered_title, HORIZONTAL_ALIGNMENT_LEFT, 246, 13, ACCENT)
-		draw_multiline_string(font, tip.position + Vector2(12, 42), _trade_item_description(hovered_title), HORIZONTAL_ALIGNMENT_LEFT, 246, 10, 0, CARD_BORDER)
+		_draw_rpg_window(tip, hovered_title.to_upper(), "ОПИСАНИЕ ПРЕДМЕТА")
+		draw_multiline_string(font, tip.position + Vector2(12, 61), _trade_item_description(hovered_title), HORIZONTAL_ALIGNMENT_LEFT, 246, 10, 0, Color("#e4dac6"))
+
+
+func _trade_category_for_title(title: String) -> String:
+	match title:
+		"Молот":
+			return "ИНСТРУМЕНТ"
+		"Горн":
+			return "ОПЕРАЦИЯ"
+		"Подкова", "Гвозди", "Скоба":
+			return "ИЗДЕЛИЕ"
+		_:
+			return "МАТЕРИАЛ"
+
+
+func _draw_rpg_window(rect: Rect2, heading: String, subtitle: String) -> void:
+	draw_rect(Rect2(rect.position + Vector2(5, 7), rect.size), Color("#050608", 0.8))
+	draw_rect(rect, Color("#171a1e"))
+	draw_rect(rect, Color("#9c8054"), false, 2.0)
+	draw_rect(Rect2(rect.position + Vector2(4, 4), rect.size - Vector2(8, 8)), Color("#292b2f"), false, 1.0)
+	draw_rect(Rect2(rect.position + Vector2(7, 7), Vector2(rect.size.x - 14, 43)), Color("#38332d"))
+	draw_line(rect.position + Vector2(10, 49), rect.position + Vector2(rect.size.x - 10, 49), Color("#9c8054"), 1.0)
+	draw_string(font, rect.position + Vector2(17, 26), heading, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 34, 14, Color("#f0dfbd"))
+	draw_string(font, rect.position + Vector2(17, 42), subtitle, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 34, 8, Color("#b9aa90"))
+
+
+func _draw_inventory_slot(rect: Rect2, hovered: bool) -> void:
+	var edge := Color("#d4b47d") if hovered else Color("#655b4b")
+	draw_rect(Rect2(rect.position + Vector2(2, 3), rect.size), Color("#08090b", 0.75))
+	draw_rect(rect, Color("#17191d"))
+	draw_rect(rect, edge, false, 1.5 if hovered else 1.0)
+	draw_rect(Rect2(rect.position + Vector2(3, 3), rect.size - Vector2(6, 6)), Color("#25272b"))
+	draw_line(rect.position + Vector2(5, 5), rect.position + Vector2(rect.size.x - 5, 5), Color("#ffffff", 0.07), 1.0)
+
+
+func _draw_item_medallion(slot: Rect2, category: String, item_color: Color) -> void:
+	var center := slot.position + Vector2(31, 29)
+	draw_circle(center, 23.0, Color("#111316"))
+	draw_arc(center, 22.0, 0.0, TAU, 36, Color("#8c7654"), 1.5)
+	_draw_card_emblem(category, center, item_color)
 
 
 func _draw_journal() -> void:
