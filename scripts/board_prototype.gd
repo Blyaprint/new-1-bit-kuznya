@@ -1,6 +1,6 @@
 extends Control
 
-const CARD_SIZE := Vector2(76, 88)
+const CARD_SIZE := Vector2(49.4, 57.2)
 const CARD_VIEW_SCENE := preload("res://scenes/ui/card_view.tscn")
 const HAND_HEIGHT := 90.0
 const HEADER_HEIGHT := 54.0
@@ -323,23 +323,23 @@ func _switch_mode(next_mode: String) -> void:
 
 
 func _market_button_rect() -> Rect2:
-	return Rect2(Vector2(284.0, 27.0), Vector2(62.0, 22.0))
+	return Rect2(Vector2(284.0, 27.0), Vector2(62.0, 20.0))
 
 
 func _production_button_rect() -> Rect2:
-	return Rect2(Vector2(350.0, 27.0), Vector2(68.0, 22.0))
+	return Rect2(Vector2(350.0, 27.0), Vector2(68.0, 20.0))
 
 
 func _research_button_rect() -> Rect2:
-	return Rect2(Vector2(422.0, 27.0), Vector2(66.0, 22.0))
+	return Rect2(Vector2(422.0, 27.0), Vector2(66.0, 20.0))
 
 
 func _recipe_button_rect() -> Rect2:
-	return Rect2(Vector2(112.0, 27.0), Vector2(78.0, 22.0))
+	return Rect2(Vector2(112.0, 27.0), Vector2(78.0, 20.0))
 
 
 func _new_game_button_rect() -> Rect2:
-	return Rect2(Vector2(194.0, 27.0), Vector2(84.0, 22.0))
+	return Rect2(Vector2(194.0, 27.0), Vector2(84.0, 20.0))
 
 
 func _new_game_dialog_rect() -> Rect2:
@@ -393,11 +393,11 @@ func _cycle_recipe() -> void:
 
 
 func _journal_button_rect() -> Rect2:
-	return Rect2(Vector2(492.0, 27.0), Vector2(54.0, 22.0))
+	return Rect2(Vector2(492.0, 27.0), Vector2(54.0, 20.0))
 
 
 func _action_button_rect() -> Rect2:
-	return Rect2(Vector2(550.0, 27.0), Vector2(78.0, 22.0))
+	return Rect2(Vector2(550.0, 27.0), Vector2(78.0, 20.0))
 
 
 func _trade_window_rect() -> Rect2:
@@ -839,7 +839,7 @@ func _card_center(card: Dictionary) -> Vector2:
 func _port_position(card: Dictionary, is_output: bool, port_index: int) -> Vector2:
 	var center := _card_center(card)
 	var ports := _output_ports(card) if is_output else _input_ports(card)
-	var y_offset := (float(port_index) - float(ports.size() - 1) * 0.5) * 24.0
+	var y_offset := (float(port_index) - float(ports.size() - 1) * 0.5) * 15.6
 	return center + Vector2(CARD_SIZE.x * 0.5 if is_output else -CARD_SIZE.x * 0.5, y_offset)
 
 
@@ -851,7 +851,7 @@ func _port_at(point: Vector2, is_output: bool) -> Dictionary:
 			continue
 		var ports := _output_ports(card) if is_output else _input_ports(card)
 		for i in range(ports.size()):
-			if point.distance_to(_port_position(card, is_output, i)) <= 9.0:
+			if point.distance_to(_port_position(card, is_output, i)) <= 6.0:
 				return {"id": card.id, "title": card.title, "port_index": i, "port_label": str(ports[i].label)}
 	return {}
 
@@ -896,7 +896,7 @@ func _hand_cards() -> Array[Dictionary]:
 
 func _hand_card_rect(index: int, count: int) -> Rect2:
 	var usable_width := maxf(220.0, size.x - 36.0)
-	var step := minf(82.0, usable_width / maxf(1.0, float(count)))
+	var step := minf(54.0, usable_width / maxf(1.0, float(count)))
 	var total_width := CARD_SIZE.x + step * maxf(0, count - 1)
 	var start_x := (size.x - total_width) * 0.5
 	var x := start_x + step * index
@@ -1061,7 +1061,8 @@ func _sync_card_views() -> void:
 				var move_tween := create_tween()
 				card_motion_tweens[card_id] = move_tween
 				move_tween.tween_property(view, "position", target, 0.16).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		view.size = CARD_SIZE
+		view.size = Vector2(76, 88)
+		view.scale = Vector2(0.65, 0.65)
 		view.call("set_card_data", card, on_board, _input_ports(card), _output_ports(card))
 	for child in card_views.get_children():
 		if child is Control and str(child.name).begins_with("Card_"):
