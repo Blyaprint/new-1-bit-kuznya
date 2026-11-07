@@ -40,6 +40,9 @@ var mat_bone: StandardMaterial3D
 var mat_gold: StandardMaterial3D
 var mat_torch: StandardMaterial3D
 var mat_sword: StandardMaterial3D
+var mat_bronze: StandardMaterial3D
+var mat_accent: StandardMaterial3D
+var mat_shadow: StandardMaterial3D
 
 func _ready() -> void:
 	_build_materials()
@@ -62,6 +65,9 @@ func _build_materials() -> void:
 	mat_gold = _mat(Color("#e5b95c"), true)
 	mat_torch = _mat(Color("#ffad58"), true)
 	mat_sword = _mat(Color("#9fb8c8"), true)
+	mat_bronze = _mat(Color("#8c7150"))
+	mat_accent = _mat(Color("#6f9b9b"), true)
+	mat_shadow = _mat(Color("#101820"))
 
 func _mat(color: Color, glow := false) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
@@ -82,14 +88,15 @@ func _build_world() -> void:
 	environment.background_color = Color("#111821")
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color("#788392")
-	environment.ambient_light_energy = 0.48
+	environment.ambient_light_energy = 0.38
+	environment.ambient_light_color = Color("#65717f")
 	environment_node.environment = environment
 	add_child(environment_node)
 
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-52.0, -35.0, 0.0)
-	sun.light_color = Color("#b8c5d2")
-	sun.light_energy = 0.7
+	sun.light_color = Color("#9eafc0")
+	sun.light_energy = 0.52
 	sun.shadow_enabled = true
 	add_child(sun)
 
@@ -123,11 +130,41 @@ func _build_world() -> void:
 	_add_wall(Vector3(0, 1.1, 12), Vector3(24, 2.2, 0.7))
 	_add_wall(Vector3(-12, 1.1, 0), Vector3(0.7, 2.2, 24))
 	_add_wall(Vector3(12, 1.1, 0), Vector3(0.7, 2.2, 24))
+	_add_dungeon_sigil()
 
 	for p in [Vector3(-8, 0, -8), Vector3(8, 0, -8), Vector3(-8, 0, 8), Vector3(8, 0, 8)]:
 		_add_pillar(p)
 	for p in [Vector3(-10.5, 0, -4), Vector3(10.5, 0, 4), Vector3(-4, 0, -10.5), Vector3(4, 0, 10.5)]:
 		_add_torch(p)
+
+func _add_dungeon_sigil() -> void:
+	var ring := MeshInstance3D.new()
+	var ring_mesh := TorusMesh.new()
+	ring_mesh.inner_radius = 2.65
+	ring_mesh.outer_radius = 2.78
+	ring.mesh = ring_mesh
+	ring.material_override = mat_bronze
+	ring.position.y = 0.055
+	add_child(ring)
+	for angle in range(0, 360, 45):
+		var rune := MeshInstance3D.new()
+		var rune_mesh := BoxMesh.new()
+		rune_mesh.size = Vector3(0.16, 0.035, 0.48)
+		rune.mesh = rune_mesh
+		rune.material_override = mat_accent
+		var radians := deg_to_rad(float(angle))
+		rune.position = Vector3(cos(radians) * 2.42, 0.06, sin(radians) * 2.42)
+		rune.rotation.y = -radians
+		add_child(rune)
+	var center := MeshInstance3D.new()
+	var center_mesh := CylinderMesh.new()
+	center_mesh.top_radius = 0.62
+	center_mesh.bottom_radius = 0.62
+	center_mesh.height = 0.035
+	center.mesh = center_mesh
+	center.material_override = mat_shadow
+	center.position.y = 0.06
+	add_child(center)
 
 func _add_wall(pos: Vector3, dimensions: Vector3) -> void:
 	var body := StaticBody3D.new()
@@ -139,6 +176,13 @@ func _add_wall(pos: Vector3, dimensions: Vector3) -> void:
 	mesh.mesh = box
 	mesh.material_override = mat_wall
 	body.add_child(mesh)
+	var trim := MeshInstance3D.new()
+	var trim_mesh := BoxMesh.new()
+	trim_mesh.size = Vector3(dimensions.x + 0.08, 0.12, dimensions.z + 0.08)
+	trim.mesh = trim_mesh
+	trim.material_override = mat_bronze
+	trim.position.y = dimensions.y * 0.5 - 0.08
+	body.add_child(trim)
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = dimensions
@@ -155,6 +199,20 @@ func _add_pillar(pos: Vector3) -> void:
 	pillar.mesh = mesh
 	pillar.material_override = mat_wall
 	pillar_body.add_child(pillar)
+	var base := MeshInstance3D.new()
+	var base_mesh := BoxMesh.new()
+	base_mesh.size = Vector3(1.28, 0.22, 1.28)
+	base.mesh = base_mesh
+	base.material_override = mat_bronze
+	base.position.y = -1.28
+	pillar_body.add_child(base)
+	var capital := MeshInstance3D.new()
+	var capital_mesh := BoxMesh.new()
+	capital_mesh.size = Vector3(1.24, 0.2, 1.24)
+	capital.mesh = capital_mesh
+	capital.material_override = mat_bronze
+	capital.position.y = 1.28
+	pillar_body.add_child(capital)
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = mesh.size
@@ -173,12 +231,19 @@ func _add_torch(pos: Vector3) -> void:
 	add_child(stand)
 	var flame := MeshInstance3D.new()
 	var flame_mesh := SphereMesh.new()
-	flame_mesh.radius = 0.18
-	flame_mesh.height = 0.36
+	flame_mesh.radius = 0.14
+	flame_mesh.height = 0.34
 	flame.mesh = flame_mesh
 	flame.material_override = mat_torch
 	flame.position = pos + Vector3(0, 1.35, 0)
 	add_child(flame)
+	var crown := MeshInstance3D.new()
+	var crown_mesh := BoxMesh.new()
+	crown_mesh.size = Vector3(0.34, 0.08, 0.34)
+	crown.mesh = crown_mesh
+	crown.material_override = mat_bronze
+	crown.position = pos + Vector3(0, 1.18, 0)
+	add_child(crown)
 	var light := OmniLight3D.new()
 	light.position = pos + Vector3(0, 1.45, 0)
 	light.light_color = Color("#ffad66")
@@ -203,12 +268,35 @@ func _build_player() -> void:
 	player.add_child(collision)
 
 	var torso := MeshInstance3D.new()
-	var torso_mesh := CapsuleMesh.new()
-	torso_mesh.radius = 0.36
-	torso_mesh.height = 1.0
+	var torso_mesh := BoxMesh.new()
+	torso_mesh.size = Vector3(0.58, 0.76, 0.38)
 	torso.mesh = torso_mesh
 	torso.material_override = mat_player
+	torso.position.y = -0.04
 	player.add_child(torso)
+	var chest_plate := MeshInstance3D.new()
+	var chest_mesh := BoxMesh.new()
+	chest_mesh.size = Vector3(0.48, 0.44, 0.08)
+	chest_plate.mesh = chest_mesh
+	chest_plate.material_override = mat_bronze
+	chest_plate.position = Vector3(0, 0.02, -0.22)
+	player.add_child(chest_plate)
+	for shoulder_x in [-0.36, 0.36]:
+		var shoulder := MeshInstance3D.new()
+		var shoulder_mesh := SphereMesh.new()
+		shoulder_mesh.radius = 0.18
+		shoulder_mesh.height = 0.28
+		shoulder.mesh = shoulder_mesh
+		shoulder.material_override = mat_bronze
+		shoulder.position = Vector3(shoulder_x, 0.2, 0)
+		player.add_child(shoulder)
+	var belt := MeshInstance3D.new()
+	var belt_mesh := BoxMesh.new()
+	belt_mesh.size = Vector3(0.62, 0.12, 0.42)
+	belt.mesh = belt_mesh
+	belt.material_override = mat_bronze
+	belt.position.y = -0.32
+	player.add_child(belt)
 
 	var cloak := MeshInstance3D.new()
 	var cloak_mesh := BoxMesh.new()
@@ -237,12 +325,33 @@ func _build_player() -> void:
 
 	var sword := MeshInstance3D.new()
 	var sword_mesh := BoxMesh.new()
-	sword_mesh.size = Vector3(0.12, 0.72, 0.12)
+	sword_mesh.size = Vector3(0.11, 0.78, 0.055)
 	sword.mesh = sword_mesh
 	sword.material_override = mat_sword
 	sword.position = Vector3(0.43, 0.02, -0.08)
 	sword.rotation.z = -0.22
 	player.add_child(sword)
+	var guard := MeshInstance3D.new()
+	var guard_mesh := BoxMesh.new()
+	guard_mesh.size = Vector3(0.32, 0.07, 0.11)
+	guard.mesh = guard_mesh
+	guard.material_override = mat_bronze
+	guard.position = Vector3(0.43, -0.18, -0.08)
+	guard.rotation.z = -0.22
+	player.add_child(guard)
+	var foot_shadow := MeshInstance3D.new()
+	var shadow_mesh := CylinderMesh.new()
+	shadow_mesh.top_radius = 0.48
+	shadow_mesh.bottom_radius = 0.48
+	shadow_mesh.height = 0.018
+	foot_shadow.mesh = shadow_mesh
+	var shadow_mat := StandardMaterial3D.new()
+	shadow_mat.albedo_color = Color(0.015, 0.025, 0.035, 0.48)
+	shadow_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	shadow_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	foot_shadow.material_override = shadow_mat
+	foot_shadow.position.y = -0.62
+	player.add_child(foot_shadow)
 
 func _build_enemies() -> void:
 	var spawn_points := [
@@ -261,6 +370,22 @@ func _build_enemies() -> void:
 		body.mesh = body_mesh
 		body.material_override = mat_enemy
 		enemy.add_child(body)
+		for rib_index in range(3):
+			var rib := MeshInstance3D.new()
+			var rib_mesh := BoxMesh.new()
+			rib_mesh.size = Vector3(0.46 - float(rib_index) * 0.06, 0.07, 0.12)
+			rib.mesh = rib_mesh
+			rib.material_override = mat_bone
+			rib.position = Vector3(0, 0.12 - float(rib_index) * 0.16, -0.25)
+			enemy.add_child(rib)
+		for shoulder_x in [-0.3, 0.3]:
+			var shoulder_bone := MeshInstance3D.new()
+			var bone_mesh := BoxMesh.new()
+			bone_mesh.size = Vector3(0.18, 0.16, 0.18)
+			shoulder_bone.mesh = bone_mesh
+			shoulder_bone.material_override = mat_bone
+			shoulder_bone.position = Vector3(shoulder_x, 0.34, 0)
+			enemy.add_child(shoulder_bone)
 		var skull := MeshInstance3D.new()
 		var skull_mesh := SphereMesh.new()
 		skull_mesh.radius = 0.23
@@ -298,10 +423,14 @@ func _build_hud() -> void:
 	panel.position = Vector2(10, 10)
 	panel.custom_minimum_size = Vector2(178, 48)
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#151d27", 0.92)
-	style.border_color = Color("#71808c")
+	style.bg_color = Color("#101820", 0.96)
+	style.border_color = Color("#9a805d")
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(0)
+	style.content_margin_left = 8.0
+	style.content_margin_right = 8.0
+	style.content_margin_top = 5.0
+	style.content_margin_bottom = 5.0
 	panel.add_theme_stylebox_override("panel", style)
 	layer.add_child(panel)
 
