@@ -27,7 +27,7 @@ corner_radius_bottom_right = 24
 corner_radius_bottom_left = 24
 
 [node name="ItemSlot" type="PanelContainer"]
-custom_minimum_size = Vector2(72, 96)
+custom_minimum_size = Vector2(50, 58)
 theme_override_styles/panel = SubResource("CardStyle")
 script = ExtResource("1")
 
@@ -44,7 +44,7 @@ horizontal_alignment = 1
 clip_text = true
 
 [node name="Icon" type="PanelContainer" parent="Content"]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 26)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_styles/panel = SubResource("IconStyle")
@@ -52,7 +52,7 @@ theme_override_styles/panel = SubResource("IconStyle")
 [node name="IconLabel" type="Label" parent="Content/Icon"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.91, 0.77, 0.53, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 16
 text = "·"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -66,10 +66,10 @@ horizontal_alignment = 1
 clip_text = true
 
 [node name="Count" type="Label" parent="."]
-offset_left = 47.0
-offset_top = 2.0
-offset_right = 69.0
-offset_bottom = 15.0
+offset_left = 30.0
+offset_top = 1.0
+offset_right = 48.0
+offset_bottom = 11.0
 theme_override_colors/font_color = Color(1, 0.84, 0.57, 1)
 theme_override_font_sizes/font_size = 9
 text = ""
