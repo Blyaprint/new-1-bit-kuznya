@@ -95,7 +95,7 @@ func _gui_input(event: InputEvent) -> void:
 		if drag_source != "" and not drag_active:
 			drag_active = true
 			drag_preview.show()
-			drag_label.text = drag_title.to_upper()
+			drag_label.text = _symbol_for(drag_title) + "\n" + drag_title
 			drag_preview.scale = Vector2(0.88, 0.88)
 			var tween := create_tween()
 			tween.tween_property(drag_preview, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
