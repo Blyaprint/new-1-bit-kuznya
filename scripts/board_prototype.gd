@@ -1025,28 +1025,9 @@ func _sync_header_captions() -> void:
 
 
 func _draw() -> void:
-	# The board, HUD, hand tray and status strip are scene textures.
-	_draw_header_button(_recipe_button_rect(), "РЕЦЕПТ: %s" % selected_recipe.to_upper(), true)
-	_draw_header_button(_new_game_button_rect(), "НОВАЯ ИГРА", false)
-	_draw_header_button(_market_button_rect(), "ТОРГОВЕЦ", market_open)
-	_draw_header_button(_production_button_rect(), "ПРОИЗВОДСТВО", mode == "production")
-	_draw_header_button(_research_button_rect(), "ИССЛЕДОВАНИЕ", mode == "research")
-	_draw_header_button(_journal_button_rect(), "ЖУРНАЛ", journal_open)
-	_draw_header_button(_action_button_rect(), "ВЫПОЛНИТЬ" if mode == "production" else "ИСПЫТАТЬ", true)
-
-
+	# Only transient graph feedback and legacy modal overlays remain here.
 	_draw_graph_legend()
 	_draw_links()
-	for card in _board_cards():
-		if int(card.id) != drag_card_id:
-			_draw_card(card, Vector2(card[_position_key()]) - CARD_SIZE * 0.5, true)
-
-
-	_draw_hand()
-	if drag_card_id != -1:
-		var dragged := _card_by_id(drag_card_id)
-		if not dragged.is_empty():
-			_draw_card(dragged, drag_position, str(dragged[_place_key()]) == "board")
 	if connecting_from_id != -1:
 		var source := _card_by_id(connecting_from_id)
 		if not source.is_empty():
@@ -1089,37 +1070,6 @@ func _draw_graph_legend() -> void:
 
 func _draw_header_button(_rect: Rect2, _label: String, _active: bool) -> void:
 	pass
-
-
-func _draw_header_icon(rect: Rect2, label: String, tint: Color) -> void:
-	var c := rect.position + rect.size * 0.5
-	draw_circle(c, 10, Color("#11100e"))
-	draw_arc(c, 9, 0.0, TAU, 32, tint, 1.2)
-	if label.begins_with("РЕЦЕПТ"):
-		draw_line(c + Vector2(-5, -5), c + Vector2(5, 5), tint, 2.0)
-		draw_line(c + Vector2(5, -5), c + Vector2(-5, 5), tint, 2.0)
-		draw_line(c + Vector2(-6, 0), c + Vector2(6, 0), tint, 1.5)
-	elif label == "НОВАЯ ИГРА":
-		draw_line(c + Vector2(-6, 0), c + Vector2(6, 0), tint, 2.0)
-		draw_line(c + Vector2(0, -6), c + Vector2(0, 6), tint, 2.0)
-	elif label == "ТОРГОВЕЦ":
-		draw_line(c + Vector2(-6, -4), c + Vector2(6, -4), tint, 2.0)
-		draw_line(c + Vector2(-4, -4), c + Vector2(-4, 6), tint, 2.0)
-		draw_line(c + Vector2(4, -4), c + Vector2(4, 6), tint, 2.0)
-		draw_line(c + Vector2(-7, 6), c + Vector2(7, 6), tint, 2.0)
-	elif label == "ПРОИЗВОДСТВО":
-		draw_line(c + Vector2(-6, -5), c + Vector2(6, -5), tint, 2.0)
-		draw_line(c + Vector2(-6, 0), c + Vector2(6, 0), tint, 2.0)
-		draw_line(c + Vector2(-6, 5), c + Vector2(6, 5), tint, 2.0)
-	elif label == "ИССЛЕДОВАНИЕ":
-		draw_circle(c, 4, tint, false, 1.8)
-		draw_line(c + Vector2(3, 3), c + Vector2(7, 7), tint, 2.0)
-	elif label == "ЖУРНАЛ":
-		draw_rect(Rect2(c + Vector2(-5, -6), Vector2(10, 12)), tint, false, 1.5)
-		draw_line(c + Vector2(-3, -2), c + Vector2(3, -2), tint, 1.0)
-		draw_line(c + Vector2(-3, 2), c + Vector2(3, 2), tint, 1.0)
-	else:
-		draw_colored_polygon(PackedVector2Array([c + Vector2(-6, -5), c + Vector2(7, 0), c + Vector2(-6, 5)]), tint)
 
 
 func _draw_links() -> void:
