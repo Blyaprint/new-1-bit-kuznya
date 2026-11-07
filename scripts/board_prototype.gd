@@ -55,6 +55,7 @@ var action_button_held := false
 var execution_message := "Производство: собери схему и нажми «Выполнить»."
 var mouse_position := Vector2.ZERO
 var font: Font
+@onready var market_layer: Control = $MarketLayer
 
 
 func _ready() -> void:
@@ -106,6 +107,9 @@ func _set_active_links(value: Array[String]) -> void:
 
 
 func _process(_delta: float) -> void:
+	market_layer.visible = market_open
+	if market_open:
+		market_layer.set_market_data(_player_trade_items(), _merchant_trade_titles(), trader_stock, money)
 	if market_animating:
 		queue_redraw()
 
@@ -1213,67 +1217,8 @@ func _trade_sale_hint(title: String, quantity: int) -> String:
 
 
 func _draw_market() -> void:
-	var player_panel := _trade_player_panel()
-	var merchant_panel := _trade_merchant_panel()
-	# The two panels are separate windows, not one combined exchange dialog.
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.48))
-	var panel_scale := lerpf(0.94, 1.0, market_anim)
-	draw_set_transform(size * (1.0 - panel_scale) * 0.5, 0.0, Vector2.ONE * panel_scale)
-	_draw_rpg_window(player_panel, "ИНВЕНТАРЬ", "ЛИЧНЫЕ ВЕЩИ И МАТЕРИАЛЫ")
-	_draw_rpg_window(merchant_panel, "ТОРГОВЕЦ", "ТОВАРЫ И МАСТЕРСКОЙ ЗАПАС")
-	var hovered_title := ""
-	var player_items := _player_trade_items()
-	# Persistent 4 × 5 slot grids: empty spaces are visible and usable as drop targets later.
-	for i in range(20):
-		_draw_inventory_slot(_trade_row_rect(player_panel, i), false)
-		_draw_inventory_slot(_trade_row_rect(merchant_panel, i), false)
-	for i in range(player_items.size()):
-		var item: Dictionary = player_items[i]
-		var slot := _trade_row_rect(player_panel, i)
-		var is_dragged := trade_drag_source == "player" and trade_drag_title == str(item.title)
-		if not is_dragged:
-			_draw_inventory_slot(slot, slot.has_point(mouse_position))
-			var item_color := _category_color(str(item.category))
-			_draw_item_medallion(slot, str(item.category), item_color)
-			draw_string(font, slot.position + Vector2(3, 59), str(item.title), HORIZONTAL_ALIGNMENT_CENTER, 56, 8, Color("#eee2c9"))
-			if int(item.quantity) > 1:
-				draw_string(font, slot.position + Vector2(34, 14), "×%d" % int(item.quantity), HORIZONTAL_ALIGNMENT_RIGHT, 25, 9, Color("#f2d59d"))
-		if slot.has_point(mouse_position) and not is_dragged:
-			hovered_title = str(item.title)
-	var merchant_titles := _merchant_trade_titles()
-	for i in range(merchant_titles.size()):
-		var title: String = merchant_titles[i]
-		var slot := _trade_row_rect(merchant_panel, i)
-		var is_dragged := trade_drag_source == "merchant" and trade_drag_title == title
-		var category := _trade_category_for_title(title)
-		if not is_dragged:
-			_draw_inventory_slot(slot, slot.has_point(mouse_position))
-			_draw_item_medallion(slot, category, _category_color(category))
-			draw_string(font, slot.position + Vector2(3, 59), title, HORIZONTAL_ALIGNMENT_CENTER, 56, 8, Color("#eee2c9"))
-			draw_string(font, slot.position + Vector2(34, 14), str(trader_stock.get(title, 0)), HORIZONTAL_ALIGNMENT_RIGHT, 25, 9, Color("#f2d59d"))
-		if slot.has_point(mouse_position) and not is_dragged:
-			hovered_title = title
-	draw_string(font, player_panel.position + Vector2(18, 393), "МОНЕТЫ: %d" % money, HORIZONTAL_ALIGNMENT_LEFT, 260, 12, Color("#e7c58c"))
-	draw_string(font, merchant_panel.position + Vector2(18, 393), "Перетащи товар в инвентарь", HORIZONTAL_ALIGNMENT_LEFT, 280, 9, MUTED)
-	_draw_header_button(_trade_close_rect(), "ЗАКРЫТЬ", false)
-	if trade_drag_source != "" and trade_drag_title != "":
-		var drag_rect := Rect2(trade_drag_position - Vector2(31, 31), Vector2(62, 62))
-		_draw_inventory_slot(drag_rect, true)
-		var drag_category := _trade_category_for_title(trade_drag_title)
-		if trade_drag_source == "player":
-			for item in player_items:
-				if str(item.title) == trade_drag_title:
-					drag_category = str(item.category)
-		_draw_item_medallion(drag_rect, drag_category, _category_color(drag_category))
-	elif hovered_title != "":
-		var tip := Rect2(mouse_position + Vector2(18, 16), Vector2(270, 92))
-		if tip.end.x > size.x:
-			tip.position.x = mouse_position.x - tip.size.x - 18
-		if tip.end.y > size.y:
-			tip.position.y = mouse_position.y - tip.size.y - 16
-		_draw_rpg_window(tip, hovered_title.to_upper(), "ОПИСАНИЕ ПРЕДМЕТА")
-		draw_multiline_string(font, tip.position + Vector2(12, 61), _trade_item_description(hovered_title), HORIZONTAL_ALIGNMENT_LEFT, 246, 10, 0, Color("#e4dac6"))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# The market is composed from reusable Control scenes in MarketLayer.tscn.
+	pass
 
 
 func _trade_category_for_title(title: String) -> String:
