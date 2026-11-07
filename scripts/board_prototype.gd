@@ -1,11 +1,11 @@
 extends Control
 
-const CARD_SIZE := Vector2(140, 164)
+const CARD_SIZE := Vector2(76, 88)
 const CARD_VIEW_SCENE := preload("res://scenes/ui/card_view.tscn")
-const HAND_HEIGHT := 178.0
-const HEADER_HEIGHT := 64.0
-const STATUS_HEIGHT := 54.0
-const BOARD_MARGIN := 28.0
+const HAND_HEIGHT := 90.0
+const HEADER_HEIGHT := 54.0
+const STATUS_HEIGHT := 24.0
+const BOARD_MARGIN := 14.0
 
 const BG := Color("#111316")
 const BOARD_BG := Color("#202328")
@@ -321,23 +321,23 @@ func _switch_mode(next_mode: String) -> void:
 
 
 func _market_button_rect() -> Rect2:
-	return Rect2(Vector2(size.x - 590.0, 12.0), Vector2(112.0, 40.0))
+	return Rect2(Vector2(284.0, 27.0), Vector2(62.0, 22.0))
 
 
 func _production_button_rect() -> Rect2:
-	return Rect2(Vector2(size.x - 470.0, 12.0), Vector2(112.0, 40.0))
+	return Rect2(Vector2(350.0, 27.0), Vector2(68.0, 22.0))
 
 
 func _research_button_rect() -> Rect2:
-	return Rect2(Vector2(size.x - 350.0, 12.0), Vector2(112.0, 40.0))
+	return Rect2(Vector2(422.0, 27.0), Vector2(66.0, 22.0))
 
 
 func _recipe_button_rect() -> Rect2:
-	return Rect2(Vector2(430.0, 12.0), Vector2(130.0, 40.0))
+	return Rect2(Vector2(112.0, 27.0), Vector2(78.0, 22.0))
 
 
 func _new_game_button_rect() -> Rect2:
-	return Rect2(Vector2(570.0, 12.0), Vector2(112.0, 40.0))
+	return Rect2(Vector2(194.0, 27.0), Vector2(84.0, 22.0))
 
 
 func _new_game_dialog_rect() -> Rect2:
@@ -391,15 +391,15 @@ func _cycle_recipe() -> void:
 
 
 func _journal_button_rect() -> Rect2:
-	return Rect2(Vector2(size.x - 230.0, 12.0), Vector2(92.0, 40.0))
+	return Rect2(Vector2(492.0, 27.0), Vector2(54.0, 22.0))
 
 
 func _action_button_rect() -> Rect2:
-	return Rect2(Vector2(size.x - 128.0, 12.0), Vector2(100.0, 40.0))
+	return Rect2(Vector2(550.0, 27.0), Vector2(78.0, 22.0))
 
 
 func _trade_window_rect() -> Rect2:
-	return Rect2(size.x * 0.5 - 362.0, size.y * 0.5 - 247.0, 724.0, 470.0)
+	return Rect2(8.0, 20.0, 624.0, 320.0)
 
 
 func _trade_close_rect() -> Rect2:
@@ -407,18 +407,18 @@ func _trade_close_rect() -> Rect2:
 
 
 func _trade_player_panel() -> Rect2:
-	return Rect2(size.x * 0.5 - 350.0, size.y * 0.5 - 205.0, 330.0, 410.0)
+	return Rect2(8.0, 20.0, 304.0, 320.0)
 
 
 func _trade_merchant_panel() -> Rect2:
-	return Rect2(size.x * 0.5 + 20.0, size.y * 0.5 - 205.0, 330.0, 410.0)
+	return Rect2(328.0, 20.0, 304.0, 320.0)
 
 
 func _trade_row_rect(panel: Rect2, index: int) -> Rect2:
-	var columns := 4
-	var slot_size := 62.0
-	var gap := 8.0
-	return Rect2(panel.position + Vector2(16.0 + (index % columns) * (slot_size + gap), 62.0 + floor(float(index) / columns) * (slot_size + gap)), Vector2(slot_size, slot_size))
+	var columns := 5
+	var slot_size := 50.0
+	var gap := 4.0
+	return Rect2(panel.position + Vector2(6.0 + (index % columns) * (slot_size + gap), 58.0 + floor(float(index) / columns) * (slot_size + gap)), Vector2(slot_size, slot_size))
 
 
 func _trade_item_description(title: String) -> String:
@@ -831,7 +831,7 @@ func _card_center(card: Dictionary) -> Vector2:
 func _port_position(card: Dictionary, is_output: bool, port_index: int) -> Vector2:
 	var center := _card_center(card)
 	var ports := _output_ports(card) if is_output else _input_ports(card)
-	var y_offset := (float(port_index) - float(ports.size() - 1) * 0.5) * 38.0
+	var y_offset := (float(port_index) - float(ports.size() - 1) * 0.5) * 24.0
 	return center + Vector2(CARD_SIZE.x * 0.5 if is_output else -CARD_SIZE.x * 0.5, y_offset)
 
 
@@ -843,7 +843,7 @@ func _port_at(point: Vector2, is_output: bool) -> Dictionary:
 			continue
 		var ports := _output_ports(card) if is_output else _input_ports(card)
 		for i in range(ports.size()):
-			if point.distance_to(_port_position(card, is_output, i)) <= 16.0:
+			if point.distance_to(_port_position(card, is_output, i)) <= 9.0:
 				return {"id": card.id, "title": card.title, "port_index": i, "port_label": str(ports[i].label)}
 	return {}
 
@@ -887,12 +887,12 @@ func _hand_cards() -> Array[Dictionary]:
 
 
 func _hand_card_rect(index: int, count: int) -> Rect2:
-	var usable_width := maxf(240.0, size.x - 80.0)
-	var step := minf(124.0, usable_width / maxf(1.0, float(count)))
+	var usable_width := maxf(220.0, size.x - 36.0)
+	var step := minf(82.0, usable_width / maxf(1.0, float(count)))
 	var total_width := CARD_SIZE.x + step * maxf(0, count - 1)
 	var start_x := (size.x - total_width) * 0.5
 	var x := start_x + step * index
-	var y := size.y - HAND_HEIGHT + 22.0 + absf(float(index) - float(count - 1) * 0.5) * 5.0
+	var y := size.y - HAND_HEIGHT + 1.0 + absf(float(index) - float(count - 1) * 0.5) * 1.0
 	return Rect2(Vector2(x, y), CARD_SIZE)
 
 
