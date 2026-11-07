@@ -6,7 +6,7 @@ extends Control
 @onready var state_label: Label = $State
 @onready var durability: ProgressBar = $Durability
 
-func set_card_data(data: Dictionary, on_board: bool) -> void:
+func set_card_data(data: Dictionary, on_board: bool, input_ports: Array = [], output_ports: Array = []) -> void:
 	category_label.text = str(data.get("category", ""))
 	var emblem_file := "emblem_material.svg"
 	match str(data.get("category", "")):
@@ -19,6 +19,18 @@ func set_card_data(data: Dictionary, on_board: bool) -> void:
 	var quantity := int(data.get("quantity", 1))
 	quantity_label.text = "×%d" % quantity if quantity > 1 else ""
 	state_label.text = "УЗЕЛ СХЕМЫ" if on_board else "В ИНВЕНТАРЕ"
+	$InputPort0.visible = on_board and input_ports.size() > 0
+	$InputLabel0.visible = on_board and input_ports.size() > 0
+	$InputPort1.visible = on_board and input_ports.size() > 1
+	$InputLabel1.visible = on_board and input_ports.size() > 1
+	$OutputPort0.visible = on_board and output_ports.size() > 0
+	$OutputLabel0.visible = on_board and output_ports.size() > 0
+	if input_ports.size() > 0:
+		$InputLabel0.text = str(input_ports[0].label)
+	if input_ports.size() > 1:
+		$InputLabel1.text = str(input_ports[1].label)
+	if output_ports.size() > 0:
+		$OutputLabel0.text = str(output_ports[0].label)
 	if str(data.get("title", "")) in ["Молот", "Горн"]:
 		durability.visible = true
 		durability.max_value = float(data.get("max_durability", 6))
