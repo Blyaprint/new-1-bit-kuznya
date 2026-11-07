@@ -59,6 +59,8 @@ var font: Font
 @onready var market_layer: Control = $MarketLayer
 @onready var card_views: Control = $CardViews
 @onready var modal_layer: Control = $ModalLayer
+@onready var link_views: Node2D = $LinkViews
+@onready var connection_preview: Node2D = $ConnectionPreview
 
 
 func _ready() -> void:
@@ -112,6 +114,8 @@ func _set_active_links(value: Array[String]) -> void:
 
 
 func _process(_delta: float) -> void:
+	_sync_link_views()
+	_sync_connection_preview()
 	_sync_card_views()
 	_sync_header_captions()
 	if market_layer.visible != market_open:
@@ -970,6 +974,43 @@ func _filter_links_for_ids(graph_links: Array[String], ids: Array) -> Array[Stri
 	return kept
 
 
+func _sync_link_views() -> void:
+	var visible_links: Array[String] = []
+	for link in _active_links():
+		var parts := link.split(":")
+		if parts.size() != 4:
+			continue
+		var from_card := _card_by_id(int(parts[0]))
+		var to_card := _card_by_id(int(parts[2]))
+		if from_card.is_empty() or to_card.is_empty():
+			continue
+		if str(from_card[_place_key()]) != "board" or str(to_card[_place_key()]) != "board":
+			continue
+		var node_name := "Link_%s" % link.replace(":", "_")
+		visible_links.append(node_name)
+		var link_node := link_views.get_node_or_null(node_name)
+		if link_node == null:
+			link_node = preload("res://scenes/ui/link_view.tscn").instantiate()
+			link_node.name = node_name
+			link_views.add_child(link_node)
+		link_node.call("set_points", _port_position(from_card, true, int(parts[1])), _port_position(to_card, false, int(parts[3])))
+	for child in link_views.get_children():
+		if not visible_links.has(str(child.name)):
+			child.queue_free()
+
+
+func _sync_connection_preview() -> void:
+	var active := connecting_from_id != -1
+	connection_preview.visible = active
+	if not active:
+		return
+	var source := _card_by_id(connecting_from_id)
+	if source.is_empty():
+		return
+	var preview_line := $ConnectionPreview/Line as Line2D
+	preview_line.points = PackedVector2Array([_port_position(source, true, connecting_from_port), mouse_position])
+
+
 func _sync_card_views() -> void:
 	if not is_instance_valid(card_views):
 		return
@@ -1033,12 +1074,6 @@ func _sync_header_captions() -> void:
 func _draw() -> void:
 	# Only transient graph feedback and legacy modal overlays remain here.
 	_draw_graph_legend()
-	_draw_links()
-	if connecting_from_id != -1:
-		var source := _card_by_id(connecting_from_id)
-		if not source.is_empty():
-			draw_line(_port_position(source, true, connecting_from_port), mouse_position, ACCENT, 4.0, true)
-			draw_circle(mouse_position, 7.0, ACCENT)
 	if market_open:
 		_draw_market()
 
@@ -1068,27 +1103,7 @@ func _draw_header_button(_rect: Rect2, _label: String, _active: bool) -> void:
 
 
 func _draw_links() -> void:
-	for link in _active_links():
-		var parts := link.split(":")
-		if parts.size() != 4:
-			continue
-		var a := _card_by_id(int(parts[0]))
-		var b := _card_by_id(int(parts[2]))
-		if a.is_empty() or b.is_empty():
-			continue
-		if str(a[_place_key()]) != "board" or str(b[_place_key()]) != "board":
-			continue
-		var from_edge := _port_position(a, true, int(parts[1]))
-		var to_edge := _port_position(b, false, int(parts[3]))
-		var direction := (to_edge - from_edge).normalized()
-		if direction == Vector2.ZERO:
-			continue
-		draw_line(from_edge, to_edge, LINK_COLOR, 3.0, true)
-		draw_circle(from_edge, 5.0, ACCENT)
-		draw_circle(to_edge, 5.0, Color("#82b8a0"))
-		var side := Vector2(-direction.y, direction.x)
-		var tip := to_edge - direction * 3.0
-		draw_colored_polygon(PackedVector2Array([tip, tip - direction * 12.0 + side * 6.0, tip - direction * 12.0 - side * 6.0]), LINK_COLOR)
+	pass
 
 
 func _card_edge_point(center: Vector2, direction: Vector2) -> Vector2:
