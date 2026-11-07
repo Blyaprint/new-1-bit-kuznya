@@ -529,8 +529,9 @@ func _update_loot() -> void:
 func _update_camera() -> void:
 	if camera == null or player == null:
 		return
-	var target := player.global_position + Vector3(9.5, 11.5, 9.5)
-	camera.global_position = camera.global_position.lerp(target, 0.12)
+	# Diablo-style camera: fixed orthographic angle, distance and zoom.
+	# It follows the hero instantly without rotation, zoom or interpolation.
+	camera.global_position = player.global_position + Vector3(9.5, 11.5, 9.5)
 	camera.look_at(player.global_position + Vector3(0, 0.25, 0), Vector3.UP)
 
 func _update_hud() -> void:
