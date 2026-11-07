@@ -1048,6 +1048,7 @@ func _sync_card_views() -> void:
 
 
 func _sync_header_captions() -> void:
+	$MoneyValue.text = str(money)
 	$ModalLayer/NewGamePanel.visible = confirm_new_game
 	$ModalLayer/Dimmer.visible = confirm_new_game
 	$ModalLayer/JournalPanel.visible = journal_open
