@@ -107,11 +107,16 @@ func _set_active_links(value: Array[String]) -> void:
 
 
 func _process(_delta: float) -> void:
-	market_layer.visible = market_open
-	if market_open:
-		market_layer.set_market_data(_player_trade_items(), _merchant_trade_titles(), trader_stock, money)
+	if market_layer.visible != market_open:
+		market_layer.visible = market_open
+		if market_open:
+			_refresh_market_scene()
 	if market_animating:
 		queue_redraw()
+
+
+func _refresh_market_scene() -> void:
+	market_layer.set_market_data(_player_trade_items(), _merchant_trade_titles(), trader_stock, money)
 
 
 func _animate_market_open() -> void:
@@ -503,6 +508,7 @@ func _buy_from_trader(title: String) -> void:
 		existing.quantity = int(existing.get("quantity", 1)) + amount
 	execution_message = "Куплено: %s ×%d за %d монету(ы)." % [title, amount, price]
 	_save_game()
+	_refresh_market_scene()
 
 
 func _sell_to_trader(title: String) -> void:
@@ -543,6 +549,7 @@ func _sell_to_trader(title: String) -> void:
 	money += payout
 	execution_message = "Продано торговцу: %s ×%d. Получено %d монет." % [title, quantity, payout]
 	_save_game()
+	_refresh_market_scene()
 
 func _save_game() -> void:
 	var saved_cards: Array[Dictionary] = []
